@@ -1,0 +1,2 @@
+export const MEMBER_DEFAULT_FIELDS = 'id name displayName membershipType announcementReadTs pic gender isDirector joinDate handicap';
+export const MEMBER_DETAIL_FIELDS = `${MEMBER_DEFAULT_FIELDS}  phone email`;

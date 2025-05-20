@@ -1,0 +1,173 @@
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { IMember } from "../interface/member.if";
+import { Document } from "mongoose";
+import { DS_LEVEL, GENDER, MEMBER_LEVEL } from "../../utils/enum";
+import { ModifiedByData } from "../common/modified-by.data";
+import * as bcrypt from "bcryptjs";
+import { IModifiedBy } from "../interface/modifyed-by.if";
+import { LoginDevice } from "../devices/login-device";
+import { ILoginDevice } from "../interface/devices.if";
+
+export type MemberDcoument = Document & Member;
+
+@Schema()
+export class Member implements IMember {
+    @Prop({index: true, unique: true})
+    id: string;
+
+    @Prop({index: true})
+    systemId: string;
+
+    @Prop()
+    name: string;
+
+    @Prop()
+    displayName: string;
+
+    @Prop()
+    password: string;
+
+    @Prop({
+        default: 0,
+    })
+    passwordLastModifiedTs: number;
+
+    @Prop({
+        enum: GENDER,
+    })
+    gender?: GENDER;
+
+    @Prop()
+    birthDate: string;
+
+    @Prop()
+    birthMonth: number;
+
+    @Prop()
+    email: string;
+
+    @Prop({index: true, unique: true, required: true})
+    phone: string;
+
+    @Prop()
+    address: string;
+
+    @Prop()
+    handicap: number;
+    
+    @Prop()
+    pic: string;
+
+    @Prop({
+        enum: MEMBER_LEVEL,
+        default: MEMBER_LEVEL.GENERAL_MEMBER,
+    })
+    membershipType: MEMBER_LEVEL;
+
+    @Prop({
+        type: ModifiedByData,
+    })
+    membershipLastModified: IModifiedBy;
+
+    @Prop()
+    mobileType: string;
+
+    @Prop()
+    mobileId: string;
+
+    @Prop()
+    joinDate: string;
+
+    @Prop()
+    expiryDate: string;
+
+    @Prop()
+    notes: string;
+
+    @Prop()
+    lastLogin?: number;
+
+    @Prop()
+    lastLoginIp: string;
+    
+    @Prop({
+        enum: DS_LEVEL,
+        default: DS_LEVEL.NONE,
+    })
+    isDirector: DS_LEVEL;
+    
+    @Prop()
+    refSystemId: string;
+
+    @Prop({
+        type: ModifiedByData, 
+    })
+    directorStatusLastModified?: IModifiedBy;
+
+    @Prop({
+        default: false,
+    })
+    isLocked: boolean;
+
+    @Prop({
+        default: 0,
+    })
+    passwordFailedCount: number;
+
+    @Prop({
+        default: 0,
+    })
+    passwordLastTryTs: number;
+
+    @Prop({
+        default: 0,
+    })
+    announcementReadTs?: number;
+
+    @Prop({
+        type:Array<Partial<LoginDevice>>
+    })
+    devices: Partial<ILoginDevice>[];
+
+    @Prop()
+    isCouponTriggered: boolean;
+}
+const saltRounds = Number(process.env.SALT_ROUNDS);
+export const MemberSchema = SchemaFactory.createForClass(Member);
+MemberSchema.pre("save", async function name(next:Function) {
+    if (!this.isModified('password')) return next();
+    try {
+        const salt = await bcrypt.genSalt(saltRounds);
+        this.password = await bcrypt.hash(this.password, salt);
+        return next();
+    } catch (err) {
+        return next(err);
+    }
+});
+MemberSchema.pre("findOneAndUpdate", async function name(next:Function) {
+    const upd = this.getUpdate() as Partial<IMember>;
+    // console.log("pre findOneAndUpdate", this.getUpdate());
+    if (upd.password) {
+        const salt = await bcrypt.genSalt(saltRounds);
+        upd.password = await bcrypt.hash(upd.password, salt);
+        //this.setUpdate(upd);
+    }
+    // console.log("pre findOneAndUpdate", this.getUpdate());
+    return next();
+})
+MemberSchema.pre("updateOne", async function name(next:Function) {
+    //console.log("updateOne start");
+    const upd = this.getUpdate() as Partial<IMember>;
+    //console.log("pre UpdateOne", upd);
+    if (upd.password) {
+        const salt = await bcrypt.genSalt(saltRounds);
+        upd.password = await bcrypt.hash(upd.password, salt);
+        //this.setUpdate(upd);
+    }
+    //console.log("pre UpdateOne end");
+    return next();    
+})
+MemberSchema.methods.comparePassword = async function(candidatePassword:string, salt:string) {
+    // console.log('comparePassword', candidatePassword, salt);
+    return bcrypt.compare(candidatePassword, salt);
+}
