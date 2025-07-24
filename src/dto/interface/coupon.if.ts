@@ -20,15 +20,17 @@ export interface ICoupon {
     toPaperNo: string;
     updater?: IModifiedBy;
     collector: IModifiedBy;
+    logs:Partial<ICouponTransferLog>[];
 }
 
 export interface ICouponTransferLog {
     id:string;
     couponId:string;
+    description:string;
     newOwner:string;
     newOwnerId:string;
-    originalOwner:string;
-    originalOwnerId:string;
+    previousOwner:string;
+    previousId:string;
     transferDate: string;
     transferDateTS: number;
 }

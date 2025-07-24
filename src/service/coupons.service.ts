@@ -5,7 +5,7 @@ import { CouponsTransferRequestDto } from '../dto/coupon/coupons-transfer-reques
 import { IMember } from '../dto/interface/member.if';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Coupon, CouponDocument } from '../dto/schemas/coupon.schema';
-import mongoose, { FilterQuery, Model } from 'mongoose';
+import mongoose, { FilterQuery, Model, UpdateQuery } from 'mongoose';
 import { Member, MemberDcoument } from '../dto/schemas/member.schema';
 import { CouponsResponseDto } from '../dto/coupon/coupons-response.dto';
 import { DtoErrMsg, ErrCode } from '../utils/enumError';
@@ -14,7 +14,7 @@ import { v1 as uuidv1 } from 'uuid';
 import { IModifiedBy } from '../dto/interface/modifyed-by.if';
 import { CouponAcceptRequestDto } from '../dto/coupon/coupon-accept-request.dto';
 import { CouponTransferLog, CouponTransferLogDocument } from '../dto/schemas/coupon-transfer-log.schema';
-import { ICoupon, ICouponTransferLog } from 'src/dto/interface/coupon.if';
+import { ICoupon, ICouponTransferLog } from '../dto/interface/coupon.if';
 
 @Injectable()
 export class CouponsService {
@@ -79,7 +79,7 @@ export class CouponsService {
       } else {
         filter.id = ctfrd.targetUserId;
       }
-      const coupon = await this.modelCoupon.findOne({id: ctfrd.couponId}, 'status');
+      const coupon = await this.modelCoupon.findOne({id: ctfrd.couponId}, 'memberId memberName status toPaperNo');
       console.log("coupon:", coupon);
       if (coupon) {
         if (coupon.status !== COUPON_STATUS.NOT_USED) {
@@ -110,12 +110,19 @@ export class CouponsService {
           modifiedBy: mbr.id,
           modifiedByWho: mbr.name,
         }
-        const newData:Partial<ICoupon> = {
+        const d = new Date();
+        const log:Partial<ICouponTransferLog> = {};
+        log.description = `${mbr.name}轉讓給${targetName}`;
+        log.transferDate = d.toLocaleString('zh-TW', {hour12: false});
+        log.transferDateTS = d.getTime();
+        //const newData:Partial<ICoupon> = {
+        const newData: UpdateQuery<CouponDocument> = {
           memberId: targetId,
           memberName: targetName,
-          originalOwnerId: coupon.memberId,
-          originalOwner: coupon.memberName,
+          //originalOwnerId: coupon.memberId,
+          //originalOwner: coupon.memberName,
           updater,
+          $push: { logs: log },
         }
         const session = await this.connection.startSession();
         session.startTransaction();
@@ -125,11 +132,17 @@ export class CouponsService {
           status: COUPON_STATUS.NOT_USED,
         }, newData, {session});
         console.log('coupon transfer:', upd);
-        let isfinal = false;
+        // let isfinal = false;
         if (upd) {
-          isfinal = await this.addTransferLog(ctfrd.couponId, newData, session);
-        }
-        if (isfinal) {
+        //   const tf:Partial<ICouponTransferLog> = {
+        //     newOwner: newData.memberName,
+        //     newOwnerId: newData.memberId,
+        //     previousId: coupon.memberId,
+        //     previousOwner: coupon.memberName,
+        //   }
+        //   isfinal = await this.addTransferLog(ctfrd.couponId, tf, session);
+        // }
+        // if (isfinal) {
           const commit = await session.commitTransaction();
           console.log('commit:', commit);
         } else {
@@ -167,7 +180,7 @@ export class CouponsService {
       memberId: cpAccept.currentOwnerId,
     };
     try {
-      const coupon = await this.modelCoupon.findOne(filter);
+      const coupon = await this.modelCoupon.findOne(filter, 'memberId memberName status toPaperNo');
       if (coupon) {
         if (coupon.status !== COUPON_STATUS.NOT_USED) {
           comRes.ErrorCode = ErrCode.COUPON_MUST_NOT_USED;
@@ -179,24 +192,37 @@ export class CouponsService {
         }
         const session = await this.connection.startSession();
         session.startTransaction();
-        const newData:Partial<ICoupon> = {
+        const d = new Date();
+        const log:Partial<ICouponTransferLog> = {};
+        log.description = `${coupon.memberName}轉讓給${mbr.name}`;
+        log.transferDate = d.toLocaleString('zh-TW', {hour12: false});
+        log.transferDateTS = d.getTime();
+        // const newData:Partial<ICoupon> = {
+        const newData:UpdateQuery<CouponDocument> = {
           memberName: mbr.name,
           memberId: mbr.id,
-          originalOwner: coupon.memberName,
-          originalOwnerId: coupon.memberId,
+          //originalOwner: coupon.memberName,
+          //originalOwnerId: coupon.memberId,
           updater: {
             modifiedByWho: mbr.name,
             modifiedAt: Date.now(),
             modifiedBy: mbr.id,
-          }
+          },
+          $push: { logs: log },
         } 
         const upd = await this.modelCoupon.updateOne({id: cpAccept.id}, newData, {session});
         console.log('couponAccept:', upd);
         let isfinal = false;
         if (upd) {
-          isfinal = await this.addTransferLog(cpAccept.id, newData, session);
-        }
-        if (isfinal) {
+        //   const tf:Partial<ICouponTransferLog> = {
+        //     newOwner: newData.memberName,
+        //     newOwnerId: newData.memberId,
+        //     previousId: coupon.memberId,
+        //     previousOwner: coupon.memberName,
+        //   }
+        //   isfinal = await this.addTransferLog(cpAccept.id, tf, session);
+        // }
+        // if (isfinal) {
           const commit = await session.commitTransaction();
           console.log('commit:', commit);
         } else {
@@ -214,19 +240,23 @@ export class CouponsService {
     }
     return comRes;
   }
-  async addTransferLog(couponId:string, updatedCP:Partial<ICoupon>, session:mongoose.ClientSession):Promise<boolean> {
+  async addTransferLog(couponId:string, log:Partial<ICouponTransferLog>, session:mongoose.ClientSession):Promise<boolean> {
     let isPass = false;
     const d = new Date();
-    const log:Partial<ICouponTransferLog>={
-      id: uuidv1(),
-      couponId: couponId,
-      newOwner: updatedCP.memberName,
-      newOwnerId: updatedCP.memberId,
-      originalOwner: updatedCP.originalOwner,
-      originalOwnerId: updatedCP.originalOwnerId,
-      transferDate: d.toLocaleString('zh-TW'),
-      transferDateTS: d.getTime(),
-    }
+    // const log:Partial<ICouponTransferLog>={
+    //   id: uuidv1(),
+    //   couponId: couponId,
+    //   newOwner: updatedCP.memberName,
+    //   newOwnerId: updatedCP.memberId,
+    //   originalOwner: updatedCP.originalOwner,
+    //   originalOwnerId: updatedCP.originalOwnerId,
+    //   transferDate: d.toLocaleString('zh-TW', {hour12: false}),
+    //   transferDateTS: d.getTime(),
+    // }
+    log.id = uuidv1();
+    log.description = `${log.previousOwner}轉讓給${log.newOwner}`;
+    log.transferDate = d.toLocaleString('zh-TW', {hour12: false});
+    log.transferDateTS = d.getTime();
     try {
       const cc = await this.modelCTL.create([log], {session});
       console.log('addTransLog:', cc);

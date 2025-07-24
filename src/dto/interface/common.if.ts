@@ -2,6 +2,7 @@ import { ErrCode } from "../../utils/enumError";
 
 export interface ICommonResponse<T> {
     errorcode: ErrCode;
+    ErrorCode?: ErrCode;
     error?: ICommonError;
     data?: T;
 }
@@ -16,4 +17,12 @@ export interface ITempData {
     value?:string;
     codeUsage?:string;
     ts:number;
+}
+
+export interface AnyObject {
+    [key:string]:any;
+}
+
+export interface IHasId extends AnyObject {
+    id?:string;
 }

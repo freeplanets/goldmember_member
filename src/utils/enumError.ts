@@ -1,3 +1,5 @@
+import { MEMBER_LEVEL } from "./enum";
+
 export enum ErrCode {
 	MISS_PARAMETER = 'MISS_PARAMETER',
 	DATABASE_ACCESS_ERROR = 'DATABASE_ACCESS_ERROR',
@@ -25,6 +27,7 @@ export enum ErrCode {
 	COUPON_NOT_FOUND = 'COUPON_NOT_FOUND',
 	TO_PAPER_ALREADY = 'TO_PAPER_ALREADY',
 	COUPON_MUST_NOT_USED = 'COUPON_MUST_NOT_USED',
+	RESERVE_SECTION_IS_BOOKED = 'RESERVE_SECTION_IS_BOOKED',
 }
 export enum ErrMsg {
 	MISS_PARAMETER = '參數不足',
@@ -53,6 +56,7 @@ export enum ErrMsg {
 	COUPON_NOT_FOUND = '查無此優惠券',
 	TO_PAPER_ALREADY = '已轉為紙本,無法轉讓',
 	COUPON_MUST_NOT_USED = '優惠券必需為未使用狀態',
+	RESERVE_SECTION_IS_BOOKED = '該時段已被預約',
 }
 export const getErrorMessage = (code: ErrCode): string => {
 	const errKey = Object.keys(ErrCode).find((key) => ErrCode[key as keyof typeof ErrCode] === code);
@@ -60,13 +64,20 @@ export const getErrorMessage = (code: ErrCode): string => {
 };
 
 export enum DtoErrMsg {
+	ID_STYLE_ERROR = '不正確的id格式',
+	ID_OR_PHONE_AT_LEAST = 'id或手機號碼,請擇一輸入',
 	PHONE_STYLE_ERROR = '電話號碼格式錯誤',
 	PASSWORD_STYLE_ERROR = '密碼格式錯誤,應包含大小寫字母、數字,長度6-15碼',
 	DATE_STYLE_ERROR = '日期格式(YYYY/MM/DD)錯誤',
+	TIME_STYLE_ERROR = '時間格式(00:00 - 23:59)錯誤',
 	EMAIL_STYLE_ERROR = '電子郵件格式錯誤',
-	ID_STYLE_ERROR = '不正確的id格式',
-	ID_OR_PHONE_AT_LEAST = 'id或手機號碼,請擇一輸入',
-} 
+	ARRAY_STYLE_ERROR = '資料必須是陣列格式',
+	MISS_BIRTH_MONTH = '生日月份未填',
+	ID_ERROR = '代號錯誤',
+	UUID_STYLE_ERROR = 'UUID格式錯誤',
+	SHARE_HOLDER_ERROR = `membershipType 只能是 ${MEMBER_LEVEL.GENERAL_MEMBER} 或 ${MEMBER_LEVEL.DEPENDENTS}.`,
+	MISS_FREQUENCY = '當發行為自動時,參數 frequency 是比填的.'
+}
 // export const errorMsg = (code:ErrCode) => {
 // 	let errKey = '';
 // 	Object.keys(ErrCode).some((key) => {

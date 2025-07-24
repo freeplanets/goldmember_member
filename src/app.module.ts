@@ -11,6 +11,7 @@ import mongoConfig from './config/mongo.config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AnnouncementsModule } from './module/announcements.module';
 import { DevicesModule } from './module/devices.module';
+import { EventNewsModule } from './module/event-news.module';
 
 let dbase = process.env.MONGO_DB;
 if (process.env.IS_OFFLINE) dbase = process.env.LMONGO_DB;
@@ -32,7 +33,7 @@ if (process.env.IS_OFFLINE) dbase = process.env.LMONGO_DB;
         connectTimeoutMS: 5000,
       }),
     }),
-    AuthModule, BookingsModule, WeatherModule, CoursesModule, AnnouncementsModule, CouponsModule, DevicesModule, MemberModule ],
+    AuthModule, BookingsModule, WeatherModule, CoursesModule, AnnouncementsModule, CouponsModule, DevicesModule, MemberModule, EventNewsModule ],
   controllers: [],
   providers: [],
 })

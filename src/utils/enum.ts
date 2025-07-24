@@ -100,3 +100,39 @@ export enum SmsCodeUsage {
   RESET_PASS = 'reset',
   PHONE_CHANGE = 'change',
 }
+
+export enum CourseName {
+    WEST = 'west', 
+    EAST = 'east', 
+    SOUTH = 'south',
+}
+
+export enum ParticipantStatus {
+  PENDING = 'pending',
+  CONFIRMED = 'confirmed',
+  CANCELLED = 'cancelled',  
+}
+
+export enum ReserveStatus {
+  PENDING = 'pending',
+  BOOKED = 'booked', 
+  CONFIRMED = 'confirmed',
+  CANCELLED = 'cancelled',
+  ALL = 'all',
+}
+
+export enum ReserveFrom {
+  APP = 'app',
+  BACKEND = 'backend',
+}
+
+export enum TimeSectionType {
+  TIMESLOT = 'timeslot', 
+  RANGE = 'range',
+}
+
+export enum ReserveType {
+  TEAM = 'team', 
+  INDIVIDUAL = 'individual',
+  ALL = 'all',
+}
