@@ -1,13 +1,15 @@
 import { Controller, Req, Res, HttpStatus, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { CouponsService } from '../service/coupons.service';
 import { Request, Response } from 'express';
-import { ApiResponse, ApiOperation, ApiTags, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ApiResponse, ApiOperation, ApiTags, ApiBearerAuth, ApiBody, getSchemaPath } from '@nestjs/swagger';
 import { CouponsResponseDto } from '../dto/coupon/coupons-response.dto';
 import { CouponsPostRequestDto } from '../dto/coupon/coupons-post-request.dto';
 import { CouponsTransferRequestDto } from '../dto/coupon/coupons-transfer-request.dto';
 import { CommonResponseDto } from '../dto/common/common-response.dto';
 import { TokenGuard } from '../utils/tokens/token-guard';
 import { CouponAcceptRequestDto } from '../dto/coupon/coupon-accept-request.dto';
+import { CouponsTransferOneDto } from '../dto/coupon/coupons-transfer-one.dto';
+import { CouponsTransferManyDto } from '../dto/coupon/coupons-transfer-many.dto';
 
 @Controller('coupons')
 @ApiTags('coupons')
@@ -55,7 +57,10 @@ export class CouponsController {
     description: '成功或失敗',
     type: CommonResponseDto,
   })
-  @ApiBody({description: '受贈者代號或手機號碼,請擇一輸入', type: CouponsTransferRequestDto})
+  @ApiBody({
+    description: '受贈者代號或手機號碼,請擇一輸入',
+    type: CouponsTransferRequestDto
+  })
   @Post('transfer')
   async couponsTransfer(
     @Body() couponsTransferRequestDto: CouponsTransferRequestDto,

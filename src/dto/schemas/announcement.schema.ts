@@ -1,10 +1,10 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { IAnnouncement, IAttachmemt } from "../interface/announcement.if";
-import { ANNOUNCEMENT_EXTEND_GROUP, ANNOUNCEMENT_GROUP, BIRTH_OF_MONTH, SEARCH_GROUP_METHOD } from "../../utils/enum";
+import { ANNOUNCEMENT_GROUP, MEMBER_EXTEND_GROUP, SEARCH_GROUP_METHOD } from "../../utils/enum";
 import { IModifiedBy } from "../interface/modifyed-by.if";
 import { Document } from "mongoose";
 import { Attachment } from "../announcements/attachment";
-import { ModifiedByData } from "../common/modified-by.data";
+import { ModifiedByData } from "../data/modified-by.data";
 
 export type AnnouncementDocument = Document & Announcement;
 
@@ -48,11 +48,11 @@ export class Announcement implements IAnnouncement {
         type: Array<String>,
         enum: ANNOUNCEMENT_GROUP
     })
-    targetGroups: [ANNOUNCEMENT_GROUP];
+    targetGroups: any[];
 
     @Prop()
-    extendFilter: ANNOUNCEMENT_EXTEND_GROUP;
-    
+    extendFilter?: MEMBER_EXTEND_GROUP[];
+
     @Prop({
         type: String,
         enum: SEARCH_GROUP_METHOD,
@@ -69,15 +69,15 @@ export class Announcement implements IAnnouncement {
     })    
     updater: IModifiedBy;
 
-    @Prop({
-        default: true,
-    })
-    isApprev: boolean;
+    // @Prop({
+    //     default: true,
+    // })
+    // isApprev: boolean;
     
     @Prop({
         type: ModifiedByData
     })
-    apprevor:IModifiedBy;
+    authorizer: IModifiedBy;
 
     @Prop()
     publishedTs: number;

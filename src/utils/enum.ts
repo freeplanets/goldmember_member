@@ -32,6 +32,18 @@ export enum ANNOUNCEMENT_TYPE {
   ANNIVERSARY = 'anniversary',
 }
 
+export enum MEMBER_GROUP {
+  ALL = 'all',
+  SHARE_HOLDER = 'share_holder',
+  GENERAL_MEMBER = 'general_member',
+  DEPENDENTS = 'dependents',
+  DIRECTOR_SUPERVISOR = 'director_and_supervisor',
+}
+
+export enum MEMBER_EXTEND_GROUP {
+  BIRTH_OF_MONTH = 'birth_of_month',
+}
+
 export enum ANNOUNCEMENT_GROUP {
   ALL = 'all',
   SHARE_HOLDER = 'share_holder',
@@ -39,9 +51,9 @@ export enum ANNOUNCEMENT_GROUP {
   DEPENDENTS = 'dependents',
   DIRECTOR_SUPERVISOR = 'director_and_supervisor',
 }
-export enum ANNOUNCEMENT_EXTEND_GROUP {
-  BIRTH_OF_MONTH = 'birth_of_month',
-}
+// export enum ANNOUNCEMENT_EXTEND_GROUP {
+//   BIRTH_OF_MONTH = 'birth_of_month',
+// }
 export enum BIRTH_OF_MONTH {
   JANUARY = 1,
   FEBRUARY = 2,
@@ -133,6 +145,50 @@ export enum TimeSectionType {
 
 export enum ReserveType {
   TEAM = 'team', 
+  INDIVIDUAL = 'individual',
+  ALL = 'all',
+}
+
+export enum TeamMemberPosition {
+  LEADER = 'leader', 
+  MANAGER = 'manager',
+  CONTACT = 'contact', 
+  MEMBER = 'member',
+}
+
+export enum TeamMemberStatus {
+  APPLYING = 'applying',  //申請中
+  INVITING = 'inviting',  //邀請中
+  CANCELLED = 'cancelled',  //拒絕申請或邀請
+  CONFIRMED = 'confirmed'
+}
+
+export enum TeamActivityStatus {
+  UPCOMING = 'upcoming', 
+  ONGOING = 'ongoing', 
+  COMPLETED = 'completed', 
+  CANCELLED = 'cancelled',
+}
+
+export enum TeamStatus {
+  ACTIVE = 'active', 
+  INACTIVE = 'inactive',
+}
+
+export enum TeamActivityRegistrationStatus {
+  REQUESTED = 'requested',
+  REJECTED = 'rejected',
+  ACCEPTED = 'accepted',
+  CONFIRMED = 'confirmed',
+}
+
+export enum ActionOp {
+  CREATE = 'create',
+  MODIFY = 'modify',
+  CANCELED = 'canceled',
+}
+
+export enum MessageType {
   INDIVIDUAL = 'individual',
   ALL = 'all',
 }

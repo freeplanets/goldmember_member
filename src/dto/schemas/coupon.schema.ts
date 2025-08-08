@@ -3,7 +3,7 @@ import { ICoupon, ICouponTransferLog } from "../interface/coupon.if";
 import { COUPON_STATUS } from "../../utils/enum";
 import { IModifiedBy } from "../interface/modifyed-by.if";
 import { Document } from "mongoose";
-import { ModifiedByData } from "../common/modified-by.data";
+import { ModifiedByData } from "../data/modified-by.data";
 import { CouponTransferLog } from "./coupon-transfer-log.schema";
 
 export type CouponDocument = Document & Coupon;

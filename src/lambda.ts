@@ -10,6 +10,7 @@ import { Context, Handler } from "aws-lambda";
 import { SecuritySchemeObject } from "@nestjs/swagger/dist/interfaces/open-api-spec.interface";
 import { ValidationPipe, ValidationPipeOptions } from "@nestjs/common";
 import { ValidationException } from "./utils/validate/validation-exception";
+import { GlobalDataTransPipe } from "./utils/pipes/global-date-trans-pipe";
 
 const authOption:SecuritySchemeObject = {
     description: 'JWT token authorization',
@@ -65,7 +66,7 @@ async function bootstrapServer():Promise<Server> {
     const vopt:ValidationPipeOptions = {
         exceptionFactory: ValidationException,
     }
-    app.useGlobalPipes(new ValidationPipe(vopt));
+    app.useGlobalPipes(new GlobalDataTransPipe(), new ValidationPipe(vopt));
     await app.init();
     return createServer(expressApp);
 }

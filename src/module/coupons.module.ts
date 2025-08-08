@@ -7,6 +7,7 @@ import { Coupon, CouponSchema } from '../dto/schemas/coupon.schema';
 import { Member, MemberSchema } from '../dto/schemas/member.schema';
 import { LoginToken, LoginTokenSchema } from '../dto/schemas/login-token.schema';
 import { CouponTransferLog, CouponTransferLogSchema } from '../dto/schemas/coupon-transfer-log.schema';
+import { Announcement, AnnouncementSchema } from '../dto/schemas/announcement.schema';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { CouponTransferLog, CouponTransferLogSchema } from '../dto/schemas/coupo
       {name:Member.name, schema:MemberSchema},
       {name:LoginToken.name, schema:LoginTokenSchema},
       {name:CouponTransferLog.name, schema:CouponTransferLogSchema},
+      {name:Announcement.name, schema:AnnouncementSchema}
     ]),
   ],
   controllers: [CouponsController],

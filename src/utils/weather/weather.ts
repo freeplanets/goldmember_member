@@ -19,7 +19,7 @@ export const getWeather = async () => {
             const StationName = data.StationName;
             const wdata:Partial<IWeather> = {};
             const we = data.WeatherElement;
-            if (we.AirTemperature && we.AirTemperature !== -99) {
+            if (we.AirTemperature && we.AirTemperature != -99) {
                 wdata.temperature = we.AirTemperature;
                 wdata.condition = we.Weather;
                 wdata.windSpeed = we.WindSpeed;

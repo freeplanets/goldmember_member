@@ -14,16 +14,29 @@ import { v1 as uuidv1 } from 'uuid';
 import { IModifiedBy } from '../dto/interface/modifyed-by.if';
 import { CouponAcceptRequestDto } from '../dto/coupon/coupon-accept-request.dto';
 import { CouponTransferLog, CouponTransferLogDocument } from '../dto/schemas/coupon-transfer-log.schema';
-import { ICoupon, ICouponTransferLog } from '../dto/interface/coupon.if';
+import { ICouponTransferLog } from '../dto/interface/coupon.if';
+import { DateLocale } from '../classes/common/date-locale';
+import { IbulkWriteItem } from '../dto/interface/common.if';
+import { sendSMSCode } from '../utils/sms';
+import { MessageOp } from '../classes/announcements/message-op';
+import lang from '../utils/lang';
+import { Announcement, AnnouncementDocument } from '../dto/schemas/announcement.schema';
 
 @Injectable()
 export class CouponsService {
+  private myDate = new DateLocale();
+  //private dbEN:dbOp<EventNewsDocument>;
+  private msgOp:MessageOp;
   constructor(
     @InjectModel(Coupon.name) private readonly modelCoupon:Model<CouponDocument>,
     @InjectModel(Member.name) private readonly modelMember:Model<MemberDcoument>,
     @InjectModel(CouponTransferLog.name) private readonly modelCTL:Model<CouponTransferLogDocument>,
+    @InjectModel(Announcement.name) private readonly modelAnn:Model<AnnouncementDocument>,
     @InjectConnection() private readonly connection:mongoose.Connection,
-  ){}
+  ){
+    //this.dbEN = new dbOp<EventNewsDocument>(modelEN);
+    this.msgOp = new MessageOp(modelAnn);
+  }
   async couponsGet(mbr:Partial<IMember>): Promise<CouponsResponseDto> {
     const cpRes = new CouponsResponseDto()
     try {
@@ -63,6 +76,7 @@ export class CouponsService {
     mbr:Partial<IMember>,
   ): Promise<CommonResponseDto> {
     console.log("coupons transfer service");
+
     const comRes = new CommonResponseDto();
     try {
       if (
@@ -79,30 +93,37 @@ export class CouponsService {
       } else {
         filter.id = ctfrd.targetUserId;
       }
-      const coupon = await this.modelCoupon.findOne({id: ctfrd.couponId}, 'memberId memberName status toPaperNo');
-      console.log("coupon:", coupon);
-      if (coupon) {
+      // 查詢會員或新增無名會員
+      let targetId = '';
+      let targetName = '';
+      let smsPhone = '';
+      const member = await this.modelMember.findOne(filter, 'id name phone');
+      if (member) {
+        targetId = member.id;
+        targetName = member.name;
+      } else {
+        if (ctfrd.targetPhone) {
+          targetId = await this.createJDoeMember(ctfrd.targetPhone, mbr);
+          targetName = ctfrd.targetPhone;
+          smsPhone = ctfrd.targetPhone; 
+        }
+      }
+      if (targetId === '') {
+        comRes.ErrorCode = ErrCode.COUPON_TARGET_USER_ERROR;
+        return comRes;
+      }      
+
+      const coupons = await this.modelCoupon.find({id: { $in: ctfrd.couponId }}, 'id memberId memberName status toPaperNo');
+      console.log("coupon:", coupons);
+      //const newDatas: UpdateQuery<CouponDocument>[]=[];
+      const bulks:IbulkWriteItem<CouponDocument>[] = []; 
+      for (const coupon of coupons) {
         if (coupon.status !== COUPON_STATUS.NOT_USED) {
           comRes.ErrorCode = ErrCode.COUPON_MUST_NOT_USED;
           return comRes;
         }        
         if (coupon.toPaperNo) {
           comRes.ErrorCode = ErrCode.TO_PAPER_ALREADY;
-          return comRes;
-        }
-        let targetId = '';
-        let targetName = '';
-        const member = await this.modelMember.findOne(filter, 'id name');
-        if (member) {
-          targetId = member.id;
-          targetName = member.name;
-        } else {
-          if (ctfrd.targetPhone) {
-            targetId = await this.createJDoeMember(ctfrd.targetPhone, mbr);
-          }
-        }
-        if (targetId === '') {
-          comRes.ErrorCode = ErrCode.COUPON_TARGET_USER_ERROR;
           return comRes;
         }
         const updater:IModifiedBy = {
@@ -113,46 +134,46 @@ export class CouponsService {
         const d = new Date();
         const log:Partial<ICouponTransferLog> = {};
         log.description = `${mbr.name}轉讓給${targetName}`;
-        log.transferDate = d.toLocaleString('zh-TW', {hour12: false});
+        log.transferDate = this.myDate.toDateTimeString();
         log.transferDateTS = d.getTime();
         //const newData:Partial<ICoupon> = {
-        const newData: UpdateQuery<CouponDocument> = {
-          memberId: targetId,
-          memberName: targetName,
-          //originalOwnerId: coupon.memberId,
-          //originalOwner: coupon.memberName,
-          updater,
-          $push: { logs: log },
-        }
-        const session = await this.connection.startSession();
-        session.startTransaction();
-        const upd = await this.modelCoupon.updateOne({
-          id: ctfrd.couponId,
-          memberId: mbr.id,
-          status: COUPON_STATUS.NOT_USED,
-        }, newData, {session});
-        console.log('coupon transfer:', upd);
-        // let isfinal = false;
-        if (upd) {
-        //   const tf:Partial<ICouponTransferLog> = {
-        //     newOwner: newData.memberName,
-        //     newOwnerId: newData.memberId,
-        //     previousId: coupon.memberId,
-        //     previousOwner: coupon.memberName,
-        //   }
-        //   isfinal = await this.addTransferLog(ctfrd.couponId, tf, session);
-        // }
-        // if (isfinal) {
-          const commit = await session.commitTransaction();
-          console.log('commit:', commit);
+        bulks.push({
+          updateOne: {
+            filter: { id: coupon.id },
+            update: {
+              memberId: targetId,
+              memberName: targetName,
+              //originalOwnerId: coupon.memberId,
+              //originalOwner: coupon.memberName,
+              updater,
+              $push: { logs: log },
+            }
+          }
+        });
+      }
+      if (bulks.length > 0) {
+        bulks.forEach((b) => {
+          console.log(b.updateOne.filter, b.updateOne.update );
+        })
+        const bulk = await this.modelCoupon.bulkWrite(bulks as any);
+        console.log(bulk);
+        //const events = new MessageOp(this.modelAnn);
+        const dt = this.myDate.toDateTimeString();
+        if (smsPhone) {
+          const phone = smsPhone.indexOf('#')>0 ? smsPhone.split('#')[0] : smsPhone;
+          //const msg = `林口高爾夫球場通知，${mbr.name}剛剛發送了${bulks.length}張優惠券給你，請查看。`;
+          const msg = lang.zhTW.CouponTransferTo.replace('{from}', mbr.name).replace('{number}', bulks.length+'');
+          const sms = await sendSMSCode(phone, msg);
+          console.log('sms:', sms);
         } else {
-          const abort = await session.abortTransaction();
-          console.log('abort:', abort);
-          comRes.ErrorCode = ErrCode.DATABASE_ACCESS_ERROR;
+          const msgApp = lang.zhTW.CouponTransforToAppUser.replace('{from}', mbr.name).replace('{datetime}', dt).replace('{number}', bulks.length+'');
+          this.msgOp.createPersonalMsg(targetId, msgApp);
+          //console.log('transfer to', ans1);
         }
-      } else {
-        console.log('check1');
-        comRes.ErrorCode = ErrCode.COUPON_TRANSFER_ERROR;
+        const msgSelf = lang.zhTW.CouponTransferToForSelf.replace('{datetime}', dt).replace('{number}', bulks.length+'').replace('{to}', targetName);
+        this.msgOp.createPersonalMsg(mbr.id, msgSelf);
+        const ans = await this.msgOp.send();
+        console.log('transfer msg self:', ans);
       }
     } catch (e) {
       console.log('couponsTransfer error:', e);
@@ -176,12 +197,18 @@ export class CouponsService {
   async couponAccept(cpAccept:CouponAcceptRequestDto, mbr:Partial<IMember>):Promise<CommonResponseDto> {
     const comRes = new CommonResponseDto();
     const filter:FilterQuery<CouponDocument> = {
-      id: cpAccept.id,
+      id: { $in: cpAccept.id.map((cid) => cid )},
       memberId: cpAccept.currentOwnerId,
     };
     try {
-      const coupon = await this.modelCoupon.findOne(filter, 'memberId memberName status toPaperNo');
-      if (coupon) {
+      console.log('filter:', filter);
+      const coupons = await this.modelCoupon.find(filter, 'id memberId memberName status toPaperNo');
+      // const session = await this.connection.startSession();
+      // session.startTransaction();
+      const bulks:IbulkWriteItem<CouponDocument>[] = [];
+      let fromName = '';
+      for (let i =0, n=coupons.length; i < n ; i+=1) {
+        const coupon =  coupons[i];
         if (coupon.status !== COUPON_STATUS.NOT_USED) {
           comRes.ErrorCode = ErrCode.COUPON_MUST_NOT_USED;
           return comRes;
@@ -190,13 +217,11 @@ export class CouponsService {
           comRes.ErrorCode = ErrCode.TO_PAPER_ALREADY;
           return comRes;
         }
-        const session = await this.connection.startSession();
-        session.startTransaction();
-        const d = new Date();
         const log:Partial<ICouponTransferLog> = {};
+        if (!fromName) fromName = coupon.memberName;
         log.description = `${coupon.memberName}轉讓給${mbr.name}`;
-        log.transferDate = d.toLocaleString('zh-TW', {hour12: false});
-        log.transferDateTS = d.getTime();
+        log.transferDate = this.myDate.toDateTimeString();
+        log.transferDateTS = Date.now();
         // const newData:Partial<ICoupon> = {
         const newData:UpdateQuery<CouponDocument> = {
           memberName: mbr.name,
@@ -210,28 +235,34 @@ export class CouponsService {
           },
           $push: { logs: log },
         } 
-        const upd = await this.modelCoupon.updateOne({id: cpAccept.id}, newData, {session});
-        console.log('couponAccept:', upd);
-        let isfinal = false;
-        if (upd) {
-        //   const tf:Partial<ICouponTransferLog> = {
-        //     newOwner: newData.memberName,
-        //     newOwnerId: newData.memberId,
-        //     previousId: coupon.memberId,
-        //     previousOwner: coupon.memberName,
-        //   }
-        //   isfinal = await this.addTransferLog(cpAccept.id, tf, session);
+        bulks.push({
+          updateOne: {
+            filter: {id: coupon.id},
+            update: newData,
+          }
+        })
+        // const upd = await this.modelCoupon.updateOne({id: cpAccept.id}, newData, {session});
+        // console.log('couponAccept:', upd);
+        // let isfinal = false;
+        // if (upd) {
+        //   const commit = await session.commitTransaction();
+        //   console.log('commit:', commit);
+        // } else {
+        //   const abort = await session.abortTransaction();
+        //   console.log('abort:', abort);
+        //   comRes.ErrorCode = ErrCode.DATABASE_ACCESS_ERROR;
         // }
-        // if (isfinal) {
-          const commit = await session.commitTransaction();
-          console.log('commit:', commit);
-        } else {
-          const abort = await session.abortTransaction();
-          console.log('abort:', abort);
-          comRes.ErrorCode = ErrCode.DATABASE_ACCESS_ERROR;
-        }
-      } else {
-        comRes.ErrorCode = ErrCode.ITEM_NOT_FOUND;
+      }
+      if (bulks.length > 0) {
+        const upds = await this.modelCoupon.bulkWrite(bulks as any);
+        console.log('upds:', upds);
+        const dt = this.myDate.toDateTimeString();
+        const msg1 = lang.zhTW.CouponTransforToAppUser.replace('{from}', fromName).replace('{datetime}', dt).replace('{number}', bulks.length + '');
+        this.msgOp.createPersonalMsg(mbr.id, msg1)
+        const msg2 = lang.zhTW.CouponTransferToForSelf.replace('{datetime}', dt).replace('{number}', bulks.length + '').replace('{to}', mbr.name);
+        this.msgOp.createPersonalMsg(cpAccept.currentOwnerId, msg2);
+        const ans = await this.msgOp.send();
+        console.log('ans:', ans);
       }
     } catch (e) {
       console.log('couponAccept error:', e);

@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Request } from 'express';
-import { CommonError } from '../utils/common-exception';
-import { ERROR_TYPE, SmsCodeUsage } from '../utils/enum';
-import { ERROR_MESSAGE, STATUS_CODE } from '../utils/constant';
+import { SmsCodeUsage } from '../utils/enum';
 import { MemberPutProfileRequestDto } from '../dto/member/member-put-profile-request.dto';
 import { MemberPasswordRequestDto } from '../dto/member/member-password-request.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -13,7 +10,6 @@ import { IMember } from '../dto/interface/member.if';
 import { CommonResponseDto } from '../dto/common/common-response.dto';
 import { ErrCode } from '../utils/enumError';
 import { TempData } from '../dto/schemas/tempdata.schema';
-import { getBirthMonth } from '../utils/common';
 import { ProfileCheck } from '../../src/dto/member/profile-check';
 import { MemberProfileResponseDto } from '../dto/member/member-profile-response.dto';
 import { MEMBER_DETAIL_FIELDS } from '../utils/base-fields-for-searh';
@@ -139,7 +135,8 @@ export class MemberService {
     const upload = await uploader.uploadFile(file);
     console.log('upload:', upload);
     if (upload) {
-      return  `https://${uploader.AWS_S3_BUCKET}/${file.originalname}`;
+      //return  `https://${uploader.AWS_S3_BUCKET}/${file.originalname}`;
+      return uploader.file_url;
     }
     return false;
   }  

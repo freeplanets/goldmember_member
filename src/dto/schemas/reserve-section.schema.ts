@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IReserveSection } from '../interface/reservations.if';
-import { CourseName, TimeSectionType } from '../../utils/enum';
+import { CourseName, ReserveStatus, TimeSectionType } from '../../utils/enum';
 import { Document } from 'mongoose';
 
 export type ReserveSectionDocument = Document & ReserveSection;
@@ -9,6 +9,12 @@ export type ReserveSectionDocument = Document & ReserveSection;
 export class ReserveSection implements IReserveSection {
     @Prop({index:true, unique: true})
     id: string;
+   
+    @Prop()
+    reservationId: string;
+
+    @Prop({index:true})
+    refId: string;
     
     @Prop({index: true})
     date:string;    //($date)日期 (YYYY/MM/DD)
@@ -30,6 +36,9 @@ export class ReserveSection implements IReserveSection {
 
     @Prop({index: true})
     type:TimeSectionType;    //時段類型 (單一時段或時間範圍) Enum:[ timeslot, range ]
+
+    @Prop()
+    status: ReserveStatus;
 }
 
 export const ReserveSectionSchema = SchemaFactory.createForClass(ReserveSection);

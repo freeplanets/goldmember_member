@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { IMember } from "../interface/member.if";
 import { Document } from "mongoose";
 import { DS_LEVEL, GENDER, MEMBER_LEVEL } from "../../utils/enum";
-import { ModifiedByData } from "../common/modified-by.data";
+import { ModifiedByData } from "../data/modified-by.data";
 import * as bcrypt from "bcryptjs";
 import { IModifiedBy } from "../interface/modifyed-by.if";
 import { LoginDevice } from "../devices/login-device";

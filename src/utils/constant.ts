@@ -27,11 +27,14 @@ export const VERIFY_CODE_MESSAGE = '林口高爾夫球場會員系統認證碼[{
 export const PASSWORD_STYLE = new RegExp(/^((?=.{6,15}$)(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).*|(?=.{6,15}$)(?=.*\d)(?=.*[a-zA-Z])(?=.*[!\u0022#$%&'()*+,./:;<=>?@[\]\^_`{|}~-]).*)/);
 export const PHONE_STYLE = new RegExp(/^09\d{8}(#\d+)?$/, "g");
 export const DATE_STYLE = new RegExp(/^\d{4}\/(0?[1-9]|1[0-2])\/(0?[1-9]|[12]\d|3[01])$/);   // YYYY/MM/DD
+export const DATE_DASH_STYLE = new RegExp(/^((19|20)?[0-9]{2}[-](0?[1-9]|1[012])[-](0?[1-9]|[12][0-9]|3[01]))$/); // YYYY-MM-DD
 export const TIME_STYLE = new RegExp(/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/); // 00:00 - 23:59
 export const EMAIL_STYLE = new RegExp(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
 export const PHONE_OR_EXTENSION_STYLE = new RegExp(/^09\d{8}(#\d+)?$/);
 export const UUID_V1_STYLE = new RegExp(/^[0-9a-f]{8}-[0-9a-f]{4}-1[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/, "i");
 export const UUID_V4_STYLE = new RegExp(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/, "i");
+export const KS_MEMBER_STYLE_FOR_SEARCH = new RegExp(/^[1256]\d{2,3}$/); //3個數字即可查詢
+
 
 export const PASSWORD_RETRY_COUNT = 5;
 export const PASSWORD_RETRY_TIME = 1800000; // 30分鐘

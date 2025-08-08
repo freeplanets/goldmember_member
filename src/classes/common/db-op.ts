@@ -1,10 +1,10 @@
 import { Model } from 'mongoose';
 import { v1 as uuidv1 } from 'uuid';
 import { IHasId } from '../../dto/interface/common.if';
-import { asyncfunc } from '../common/func.def';
-import { ADbBasicMethods } from '../common/db-basic-methods';
+import { asyncfunc } from './func.def';
+import { ADbBasicMethods } from './db-basic-methods';
 
-export class EventNewsOp<T extends IHasId> extends ADbBasicMethods<T> {
+export class dbOp<T extends IHasId> extends ADbBasicMethods<T> {
     constructor(private readonly model:Model<T>) {
         super();
     }
@@ -33,10 +33,13 @@ export class EventNewsOp<T extends IHasId> extends ADbBasicMethods<T> {
         return this.model.find(filter);
     }
 
-    findOne:asyncfunc = async (params:any): Promise<T> => {
+    findOneById:asyncfunc = async (params:any): Promise<T> => {
         const [id] = params;
         return this.model.findOne({id});
     }
 
-
+    findOne:asyncfunc = async (params:any): Promise<T> => {
+        const [filter] = params;
+        return this.model.findOne(filter);
+    }    
 }

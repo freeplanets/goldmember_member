@@ -23,7 +23,6 @@ import { AuthSendVerificationResponseDto } from '../dto/auth/auth-send-verificat
 import * as svgCaptcha from "svg-captcha";
 import { TempData, TempDataDocument } from '../dto/schemas/tempdata.schema';
 import { ITempData } from '../dto/interface/common.if';
-import { DateWithLeadingZeros, getBirthMonth } from '../utils/common';
 import { LoginToken, LoginTokenDocument } from '../dto/schemas/login-token.schema';
 import { SmsCodeUsage } from '../utils/enum';
 import { ProfileCheck } from '../dto/member/profile-check';
@@ -33,9 +32,11 @@ import { RefreshTokenData } from '../dto/auth/refresh-token-data';
 import { ILoginDevice } from '../dto/interface/devices.if';
 import { MemberActivity, MemberActivityDocument } from '../dto/schemas/member-activity.schema';
 import { MemberGrowth, MemberGrowthDocument } from '../dto/schemas/member-growth.schema';
+import { DateLocale } from '../classes/common/date-locale';
 
 @Injectable()
 export class AuthService {
+  private myDate = new DateLocale();
   constructor(
     @InjectModel(Member.name) private readonly modelMember:Model<MemberDcoument>,
     @InjectModel(TempData.name) private readonly modelTempData:Model<TempDataDocument>,
@@ -58,7 +59,7 @@ export class AuthService {
       }
       const mbr = await this.modelMember.findOne(
         {phone: authRequestDto.phone},
-        `${MEMBER_DEFAULT_FIELDS} password passwordLastModifiedTs isLocked passwordFailedCount passwordLastTryTs devices`,
+        `${MEMBER_DEFAULT_FIELDS} systemId phone password passwordLastModifiedTs isLocked passwordFailedCount passwordLastTryTs devices`,
       );
       console.log("member:", mbr);
       if (mbr) {
@@ -80,6 +81,8 @@ export class AuthService {
             // birthMonth: getBirthMonth(mbr.birthDate),
             membershipType: mbr.membershipType,
             announcementReadTs: mbr.announcementReadTs,
+            systemId: mbr.systemId,
+            phone: mbr.phone,
             pic: mbr.pic,
             //phone: mbr.phone,
             //isDirector: mbr.isDirector,
@@ -217,12 +220,16 @@ export class AuthService {
             }
           }
           memberRegister.passwordLastModifiedTs = new Date().getTime();
-          memberRegister.joinDate = DateWithLeadingZeros();
+          memberRegister.joinDate = this.myDate.toDateString();
           const existsMbr = await this.modelMember.findOne({phone: memberCreate.phone, isCouponTriggered: true}, 'id');
           console.log('existsMbr:', existsMbr);
           let rlt:any;
           if (existsMbr) {
             // memberRegister.id = existsMbr.id;
+            if (existsMbr.name) {
+              comRes.ErrorCode = ErrCode.ACCOUNT_EXISTS;
+              return comRes;
+            }
             rlt = await this.modelMember.updateOne({id: existsMbr.id}, memberRegister);
           } else {
             memberRegister.id = uuidv1();
@@ -445,7 +452,8 @@ export class AuthService {
     const upload = await uploader.uploadFile(file);
     console.log('upload:', upload);
     if (upload) {
-      return  `${uploader.AWS_S3_BUCKET}/${file.originalname}`;
+      //return  `${uploader.AWS_S3_BUCKET}/${file.originalname}`;
+      return uploader.file_url;
     }
     return false;
   }
@@ -507,16 +515,18 @@ export class AuthService {
     return comRes;
   }
   async addMemberActivity(memberId:string, membershipType:string, lastLogin:number):Promise<void> {
-    const d = new Date();
-    const year = d.getFullYear();
-    const month = d.getMonth() + 1;
+    //const d = new Date();
+    //const year = d.getFullYear();
+    //const month = this.myDate.getMonth();  //d.getMonth() + 1;
+    const {year, month} = this.myDate.getYearMonth();
     const upsert = await this.modelMA.updateOne({year, month, memberId}, {membershipType, lastLogin}, {upsert: true});
     console.log('AddMemberActivity:', upsert);
   }
   async modifyMemberGrowth() {
-    const d = new Date();
-    const year = d.getFullYear();
-    const month = d.getMonth() + 1;
+    // const d = new Date();
+    // const year = d.getFullYear();
+    // const month = d.getMonth() + 1;
+    const {year, month} = this.myDate.getYearMonth();
     const filter = {
       year,
       month,

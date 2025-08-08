@@ -1,23 +1,25 @@
-import { ANNOUNCEMENT_EXTEND_GROUP, ANNOUNCEMENT_GROUP, ANNOUNCEMENT_READ_STATUS } from "../../utils/enum";
+import { ANNOUNCEMENT_READ_STATUS } from "../../utils/enum";
+import { IHasFilterItem } from "./common.if";
 import { IModifiedBy } from "./modifyed-by.if";
 
-export interface IAnnouncement {
-    id?: string;
+export interface IAnnouncement extends IHasFilterItem {
+    //id?: string;
     title?: string;
     content?: string;
-    type?: string;
+    //type?: string;
     publishDate?: string;
     expiryDate?: string;
     isPublished?: boolean;
     isTop?: boolean;
     iconType?: string;
     attachments?: IAttachmemt[];
-    targetGroups: ANNOUNCEMENT_GROUP[];
-    extendFilter: ANNOUNCEMENT_EXTEND_GROUP;
+    //targetGroups: ANNOUNCEMENT_GROUP[];
+    //extendFilter: ANNOUNCEMENT_EXTEND_GROUP;
     creator: IModifiedBy;
     updater: IModifiedBy;
-    isApprev: boolean;
-    apprevor:IModifiedBy;
+    //isApprev: boolean;
+    //apprevor:IModifiedBy;
+    authorizer:IModifiedBy;
     publishedTs:number;
 }
 

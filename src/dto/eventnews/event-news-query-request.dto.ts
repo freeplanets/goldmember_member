@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IEventNews } from '../interface/event-news';
-import { IsOptional, Matches } from 'class-validator';
+import { IsOptional, IsString, IsUUID, Matches } from 'class-validator';
 import { DATE_STYLE } from '../../utils/constant';
 import { DtoErrMsg } from '../../utils/enumError';
 
@@ -20,4 +20,13 @@ export class EventNewsQueryRequest implements Partial<IEventNews> {
     @IsOptional()
     @Matches(DATE_STYLE, { message: DtoErrMsg.DATE_STYLE_ERROR})
     dateEnd: string;
+    
+    // @ApiProperty({
+    //     description: '會員ID',
+    //     required: false,
+    // })
+    // @IsOptional()
+    // @IsString()
+    // @IsUUID()
+    // memberId:string;
 }

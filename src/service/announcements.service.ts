@@ -9,9 +9,11 @@ import { AnnouncementsResponseDto } from '../dto/announcements/announcements-res
 import { ErrCode } from '../utils/enumError';
 import { Member, MemberDcoument } from '../dto/schemas/member.schema';
 import { IAnnouncement } from '../dto/interface/announcement.if';
+import { DateLocale } from '../classes/common/date-locale';
 
 @Injectable()
 export class AnnouncementsService {
+    private myDate = new DateLocale();
     constructor(
         @InjectModel(Announcement.name) private readonly modelAnnounce:Model<AnnouncementDocument>,
         @InjectModel(Member.name) private readonly modelMember:Model<MemberDcoument>,
@@ -19,8 +21,14 @@ export class AnnouncementsService {
 
     async getAnnounce(user:Partial<IMember>|undefined = undefined):Promise<AnnouncementsResponseDto> {
         const annRes = new AnnouncementsResponseDto();
+        console.log(user);
         const filter =  await this.getFilter(user);
-        console.log('filter', filter, filter.targetGroups);
+        console.log('filter', filter, filter.$or);
+        if (filter.$or) {
+            filter.$or.forEach((itm) => {
+                console.log(itm);
+            })
+        }
         try {
             const ans = await this.modelAnnounce.find(filter, "id title content type publishDate isTop iconType attachments");
             // console.log('ans:', ans);
@@ -52,30 +60,29 @@ export class AnnouncementsService {
     }
     async getFilter(user:Partial<IMember>|undefined = undefined) {
         let filter:FilterQuery<Announcement>={};
+        console.log(user);
         if (!user) {
             filter.targetGroups = {
                     $elemMatch: { $eq: ANNOUNCEMENT_GROUP.ALL },
             };
         } else {
-            const mbr =  await this.modelMember.findOne({id: user.id}, 'membershipType isDirector birthMonth');
-            if (mbr) {
-                filter = {
-                    $or:[
-                        // {targetGroups: { $elemMatch: { $eq: ANNOUNCEMENT_GROUP.ALL }}} 
-                    ],
-                }
-                filter.$or.push({targetGroups: { $elemMatch: { $eq: mbr.membershipType }}});
-                if (mbr.isDirector !== DS_LEVEL.NONE) {
-                    filter.$or.push({targetGroups: { $elemMatch: { $eq: ANNOUNCEMENT_GROUP.DIRECTOR_SUPERVISOR }}})
-                }
+            filter = {
+                $or:[
+                    {targetGroups: { $elemMatch: { $eq: ANNOUNCEMENT_GROUP.ALL }}},
+                    {targetGroups: { $elemMatch: { $eq: user.membershipType }}},
+                    {targetGroups: { $elemMatch: { id: user.id}}}
+                ],
             }
-            if (filter.$or.length === 1 ) {
-                filter.targetGroups = filter.$or[0].targetGroups;
-                delete filter.$or;
-            }
+            if (user.isDirector !== DS_LEVEL.NONE) {
+                filter.$or.push({targetGroups: { $elemMatch: { $eq: ANNOUNCEMENT_GROUP.DIRECTOR_SUPERVISOR }}})
+            }            
+
         }
         filter.isPublished = true;
         filter.publishedTs = { $gt: Date.now() - THREE_MONTH };
+        filter.expiryDate = { $gte: this.myDate.toDateString() };
+        // filter.isApprev = true;
+        filter.authorizer = { $exists: true };
         return filter;
     }
 }

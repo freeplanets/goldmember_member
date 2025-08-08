@@ -9,8 +9,8 @@ import { EventNewsQueryRequest } from '../dto/eventnews/event-news-query-request
 
 @Controller('event-news')
 @ApiTags('event-news')
-@UseGuards(TokenGuard)
-@ApiBearerAuth()
+// @UseGuards(TokenGuard)
+// @ApiBearerAuth()
 export class EventNewsController {
     constructor(private readonly enService:EventNewsService){}
 
@@ -22,9 +22,10 @@ export class EventNewsController {
         description: '成功或失敗',
         type: EventNewsListRes
     })
-    @Get()
+    @Get('')
     async getEventNews(
         @Query() query:EventNewsQueryRequest,
+        @Req() req:any,
         @Res() res:Response,
     ){
         const rlt = await this.enService.list(query);

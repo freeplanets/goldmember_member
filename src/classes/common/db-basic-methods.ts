@@ -8,4 +8,5 @@ export abstract class ADbBasicMethods<T> {
     abstract modify:asyncfunc;  //(id:string, obj:Partial<T>):Promise<UpdateWriteOpResult>;
     abstract list:asyncfunc;    //(filter:any):Promise<T[]>;
     abstract findOne:asyncfunc; //(id:string):Promise<T>;
+    abstract findOneById:asyncfunc;
 }

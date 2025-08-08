@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ICoupon, ICouponTransferLog } from '../interface/coupon.if';
 import { IModifiedBy } from '../interface/modifyed-by.if';
 import { CouponRequestDto } from './coupon-request.dto';
-import { ModifiedByData } from '../common/modified-by.data';
+import { ModifiedByData } from '../data/modified-by.data';
 import { COUPON_TYPES } from '../../utils/enum';
 
 export class CouponData extends CouponRequestDto implements ICoupon {

@@ -1,9 +1,9 @@
 import { IsString, IsNumber, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { DATE_STYLE } from '../utils/constant';
-import { DtoErrMsg } from '../utils/enumError';
-import { IReserveSection } from './interface/reservations.if';
-import { CourseName } from '../utils/enum';
+import { DATE_STYLE } from '../../utils/constant';
+import { DtoErrMsg } from '../../utils/enumError';
+import { IReserveSection } from '../interface/reservations.if';
+import { CourseName } from '../../utils/enum';
 
 export class BookingsPostRequestDto implements Partial<IReserveSection> {
   @ApiProperty({

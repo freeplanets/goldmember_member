@@ -1,12 +1,13 @@
-import { DateWithLeadingZeros, getBirthMonth } from '../../../src/utils/common';
 import { IMember } from '../interface/member.if';
 import { MemberPutProfileRequestDto } from './member-put-profile-request.dto';
 import { DATE_STYLE, EMAIL_STYLE, PHONE_STYLE } from '../../../src/utils/constant';
 import { DtoErrMsg } from '../../../src/utils/enumError';
+import { DateLocale } from '../../classes/common/date-locale';
 
 export class ProfileCheck {
     private _data:Partial<IMember>;
     private _error:any;
+    private myDate = new DateLocale();
     constructor(memberPutProfile:MemberPutProfileRequestDto){
         const memberProfile:Partial<IMember> = {};
         const error = {};
@@ -25,8 +26,8 @@ export class ProfileCheck {
                                 value: memberPutProfile[key], 
                             }
                         } else {
-                            memberProfile.birthMonth = getBirthMonth(memberPutProfile[key]);
-                            memberPutProfile[key] = DateWithLeadingZeros(memberPutProfile[key]);
+                            memberProfile.birthMonth = this.myDate.getBirthMonth(memberPutProfile[key]);
+                            memberPutProfile[key] = this.myDate.toDateString(memberPutProfile[key]);
                         }
                     } else if (key== 'phone') {
                         if (!PHONE_STYLE.test(memberPutProfile[key])) {
