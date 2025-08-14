@@ -13,6 +13,7 @@ import { ReserveOp } from '../classes/reservation/reverve-op';
 import { FuncWithTryCatchNew } from '../classes/common/func.def';
 import { IbulkWriteItem } from '../dto/interface/common.if';
 import { CommonResponseData } from '../dto/common/common-response.data';
+import { DateRangeQueryReqDto } from '../dto/common/date-range-query-request.dto';
 
 @Injectable()
 export class BookingsService {
@@ -108,8 +109,8 @@ export class BookingsService {
     // return comRes;
   }  
   
-  bookingsAvailable(date: string): Promise<any> {
-    return FuncWithTryCatchNew(this.revOp, 'list', date);
+  bookingsAvailable(dates: DateRangeQueryReqDto): Promise<any> {
+    return FuncWithTryCatchNew(this.revOp, 'list', dates);
   }
   async cancelBooking(id:string, user:Partial<IMember>, teamId:string='') {
     return FuncWithTryCatchNew(this.revOp, 'cancel', id, user, teamId);

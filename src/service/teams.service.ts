@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Team, TeamDocument } from '../dto/schemas/team.schema';
+import { Team, TeamDocument, TeamSchema } from '../dto/schemas/team.schema';
 import mongoose, { Connection, FilterQuery, Model, UpdateQuery } from 'mongoose';
 import { TeamMemberDocument, TeamMember } from '../dto/schemas/team-member.schema';
 import { v1 as uuidv1 } from 'uuid';
@@ -10,17 +10,14 @@ import { IActivityParticipants, IActMemberInfo, ICreditRecord, ITeam, ITeamActiv
 import { GetTeamsResponse } from '../dto/teams/get-teams-response';
 import { TeamDetailResponse } from '../dto/teams/team-detail-response';
 import { Upload2S3 } from '../utils/upload-2-s3';
-import { TeamMemberPosition, TeamMemberStatus } from '../utils/enum';
+import { COLLECTION_REF, ORGANIZATION_TYPE, TeamMemberPosition, TeamMemberStatus } from '../utils/enum';
 import { Member, MemberDcoument } from '../dto/schemas/member.schema';
 import { TeamActivity, TeamActivityDocument } from '../dto/schemas/team-activity.schema';
 import { ActivityParticipantsResponse } from '../dto/teams/activity-participants-response';
-import { TeamMemberAddRequestDto } from '../dto/teams/team-member-add-request.dto';
 import { IMember } from '../dto/interface/member.if';
 //import { KsMember, KsMemberDocument } from '../dto/schemas/ksmember.schema';
-import { KS_MEMBER_STYLE_FOR_SEARCH } from '../utils/constant';
-import { IbulkWriteItem, IHasId, IHasPhone } from '../dto/interface/common.if';
+import { IbulkWriteItem, IHasId, IHasPhone, IOrganization } from '../dto/interface/common.if';
 import TeamPositonInfo from '../dto/teams/team-position-info';
-import TeamCreateRequestDto from '../dto/teams/team-create-request.dto';
 import { TeamUpdateRequestDto } from '../dto/teams/team-update-request.dto';
 import { CreditRecordRes } from '../dto/teams/credit-record-response';
 import { TeamActivitiesRes } from '../dto/teams/team-activities-response';
@@ -30,6 +27,11 @@ import { CreditRecord, CreditRecordDocument } from '../dto/schemas/credit-record
 import { DateRangeQueryReqDto } from '../dto/common/date-range-query-request.dto';
 import { CommonResponseData } from '../dto/common/common-response.data';
 import { TeamMemberUpdateRequestDto } from '../dto/teams/team-member-update-request.dto';
+import { KsMember, KsMemberDocument } from '../dto/schemas/ksmember.schema';
+import { Announcement, AnnouncementDocument } from '../dto/schemas/announcement.schema';
+import { AnnounceOp } from '../classes/announcements/announce-op';
+import { FuncWithTryCatchNew } from '../classes/common/func.def';
+import { IAnnouncement } from '../dto/interface/announcement.if';
 
 interface I_TMPositon {
     T: TeamPositonInfo;
@@ -39,15 +41,19 @@ interface I_TMPositon {
 @Injectable()
 export class TeamsService {
     private myDate = new DateLocale();
+    private annOp:AnnounceOp;
     constructor(
         @InjectModel(Team.name) private readonly modelTeam:Model<TeamDocument>,
         @InjectModel(TeamMember.name) private readonly modelTeamMember:Model<TeamMemberDocument>,
         @InjectModel(Member.name) private readonly modelMember:Model<MemberDcoument>,
-        //@InjectModel(KsMember.name) private readonly modelKs:Model<KsMemberDocument>,
+        @InjectModel(KsMember.name) private readonly modelKs:Model<KsMemberDocument>,
         @InjectModel(CreditRecord.name) private readonly modelCreditRecord:Model<CreditRecordDocument>,
         @InjectModel(TeamActivity.name) private readonly modelTeamActivity:Model<TeamActivityDocument>,
+        @InjectModel(Announcement.name) private readonly modelAnn:Model<AnnouncementDocument>,
         @InjectConnection() private readonly connection: Connection, // 
-    ) {}
+    ) {
+        this.annOp = new AnnounceOp(modelMember, modelKs, modelAnn);
+    }
     async getTeams(search:string=''){
         const teamRes = new GetTeamsResponse();
         const filter:FilterQuery<TeamDocument> = {};
@@ -59,11 +65,11 @@ export class TeamsService {
                 .find(filter, TEAM_DETAIL_FIELDS)
                 .populate({
                     path: 'members',
-                    // select: 'name role joinDate',
-                    // populate: {
-                    //     path: 'member',
-                    //     select: 'id name phone membershipType systemId',
-                    // },
+                    select: 'role joinDate handicap status memberInfo memberFrom',
+                    populate: {
+                        path: 'memberInfo',
+                        select: 'id no name pic handicap',
+                    },
                 })
                 // .populate({
                 //     path: 'creditHistory',
@@ -82,6 +88,41 @@ export class TeamsService {
         }
         return teamRes;
     }
+    async getMyTeams(user:Partial<IMember>) {
+        const teamRes = new GetTeamsResponse();
+        try {
+            const self = await this.modelMember.findOne({id:user.id}, 'id');
+            const tmrs = await this.modelTeamMember.find({memberInfo: self._id}, 'teamId');
+            if (tmrs.length > 0) {
+                const teamIds = tmrs.map((tmr) => tmr.teamId);
+                const teams = await this.modelTeam.find({id: {$in: teamIds }}, TEAM_DETAIL_FIELDS)
+                .populate({
+                    path: 'members',
+                    select: 'role joinDate handicap status memberInfo memberFrom',
+                    populate: {
+                        path: 'memberInfo',
+                        select: 'id no name pic handicap',
+                    },
+                })
+                // .populate({
+                //     path: 'creditHistory',
+                //     select: 'date score reason recordedBy',
+                // })
+                // .populate({
+                //     path: 'activities',
+                //     // match: { date: { $gte: '2025/07/16'} },
+                //     // select: 'id title date',
+                // })
+                .exec();
+                teamRes.data = teams;
+            }
+        } catch (error) {
+            console.log('getMyTeams error:', error);
+            teamRes.ErrorCode = ErrCode.UNEXPECTED_ERROR_ARISE;
+            teamRes.error.extra = error.message;
+        }
+        return teamRes;
+    }   
     async getTeamDetail(teamId: string): Promise<TeamDetailResponse> {
         const teamDetailRes = new TeamDetailResponse();
         try {
@@ -89,13 +130,13 @@ export class TeamsService {
                 .findOne({ id: teamId }, TEAM_DETAIL_FIELDS)
                 .populate({
                     path:'members', 
-                    // select: 'name joinDate role memberFrom',
-                    // populate: {
-                    //     path: 'member',
-                    //     select: 'id no name phone membershipType systemId',
-                    //     localField: 'name',
-                    //     foreignField: 'member',
-                    // }
+                    select: 'role joinDate handicap status memberInfo memberFrom',
+                    populate: {
+                        path: 'memberInfo',
+                        select: 'id no name pic handicap',
+                        //localField: 'name',
+                        //foreignField: 'member',
+                    }
                 })
                 // .populate({
                 //     path: 'creditHistory',
@@ -148,13 +189,15 @@ export class TeamsService {
                     // newTeam.description = rlt.OriginalFilename;
                 }
             }
+            const myInfo = await this.modelMember.findOne({id: user.id}, 'id');
             const tmbrs:Partial<ITeamMember>[] = [];
             tmbrs.push({
-                id:	user.id,
-                name: user.name,
-                phone: user.phone,
-                membershipType: user.membershipType,
-                systemId: user.systemId,
+                memberInfo: myInfo._id,
+                // id:	user.id,
+                // name: user.name,
+                // phone: user.phone,
+                // membershipType: user.membershipType,
+                // systemId: user.systemId,
                 handicap: user.handicap,
                 teamId: newTeam.id,
                 role: TeamMemberPosition.LEADER,
@@ -258,7 +301,7 @@ export class TeamsService {
             if (teamMbr) {
                 comRes.ErrorCode = ErrCode.TEAM_MEMBER_ALREADY_EXISTS;
             } else {
-                const newMember = this.createNewMember(teamId, user);
+                const newMember = await this.createNewMember(teamId, user);
                 newMember.status = TeamMemberStatus.APPLYING;
                 const ins = await this.modelTeamMember.create(newMember);
                 if (ins) {
@@ -281,9 +324,12 @@ export class TeamsService {
     ): Promise<CommonResponseDto> {
         const comRes = new CommonResponseDto();
         try {
+            console.log('updateTeamMember:', teamId, mbr);
+            const f = await this.modelMember.findOne({id: mbr.id}, 'id');
             const filter:FilterQuery<TeamMemberDocument> = {
                 teamId,
-                id: mbr.id,
+                //id: mbr.id,
+                memberInfo: f._id
             }
             const existingMember = await this.modelTeamMember.findOne(filter);
             console.log("existingMember:", filter, existingMember);
@@ -301,7 +347,8 @@ export class TeamsService {
             );
             console.log('upd1:', upd);
             upd = await this.modelTeamMember.updateOne(
-                {teamId, id: mbr},
+                // {teamId, id: mbr},
+                filter,
                 {role: mbr.role},
                 {session},
             )
@@ -495,9 +542,9 @@ export class TeamsService {
         // }
         tmbr.joinDate = this.myDate.toDateString();
         tmbr.isActive = true;
-        if (obj.phone) {
-            tmbr.phone = obj.phone;
-        }
+        // if (obj.phone) {
+        //     tmbr.phone = obj.phone;
+        // }
         if (obj.role) {
             tmbr.role = obj.role;
         }
@@ -523,22 +570,24 @@ export class TeamsService {
         try {
             const mbr = await this.modelMember.findOne(
                 {id: obj.id}, 
-                'id name phone membershipType systemId handicap'
+                'id'
             );
             console.log('getAppMember:', obj, mbr);
             if (mbr) {
                  tmbr = {
-                    id:	mbr.id,
-                    name: mbr.name,
-                    phone: mbr.phone,
-                    membershipType: mbr.membershipType,
-                    systemId: mbr.systemId,
+                    //id:	mbr.id,
+                    memberInfo: mbr._id,
+                    memberFrom: COLLECTION_REF.Member,
+                    // name: mbr.name,
+                    // phone: mbr.phone,
+                    // membershipType: mbr.membershipType,
+                    // systemId: mbr.systemId,
                     handicap: mbr.handicap,
                 }
             } else {
                 tmbr = {
-                    name: obj.name,
-                    phone: obj.phone,
+                    //name: obj.name,
+                    //phone: obj.phone,
                 }
             }
             return tmbr;
@@ -547,28 +596,7 @@ export class TeamsService {
         }
         return tmbr;
     }
-    // teamPosCheck(info:TeamCreateRequestDto) {
-    //     const tmPoss:I_TMPositon[] = [];
-    //     if (info.leader) {
-    //         tmPoss.push({
-    //             T: info.leader,
-    //             Pos: TeamMemberPosition.LEADER,
-    //         })
-    //     }
-    //     if(info.manager) {
-    //         tmPoss.push({
-    //             T: info.manager,
-    //             Pos: TeamMemberPosition.MANAGER,
-    //         })            
-    //     }
-    //     if (info.contacter) {
-    //         tmPoss.push({
-    //             T: info.contacter,
-    //             Pos: TeamMemberPosition.CONTACT,
-    //         })
-    //     }
-    //     return tmPoss;
-    // }
+
     async getCreditRecords(teamId:string, dates:DateRangeQueryReqDto) {
         const comRes = new CreditRecordRes();
         try {
@@ -594,6 +622,12 @@ export class TeamsService {
         }
         return comRes;
     }
+    async getActivitiesLastThreeMonths(teamId:string) {
+        const dates=new DateRangeQueryReqDto();
+        dates.startDate = this.myDate.toDateString();
+        dates.endDate = this.myDate.AddMonth(3);
+        return this.getActivities(teamId, dates);
+    }
     async getActivities(teamId:string, dates:DateRangeQueryReqDto){
         const comRes = new TeamActivitiesRes();
         try {
@@ -610,6 +644,7 @@ export class TeamsService {
             } else if (dates.endDate) {
                 filter.date = { $lte: dates.endDate };
             }
+            console.log('filter:', filter, filter.$and);
             comRes.data = await this.modelTeamActivity.find(filter);
         } catch(error) {
             console.log('getCreditRecords error:', error);
@@ -657,16 +692,53 @@ export class TeamsService {
         }
         return comRes;        
     }
-    createNewMember(teamId:string,user:Partial<IMember>):Partial<ITeamMember> {
+    async createNewMember(teamId:string,user:Partial<IMember>):Promise<Partial<ITeamMember>> {
+        const f = await this.modelMember.findOne({id: user.id});
         return {
             teamId,
             id: user.id,
-            name: user.name,
-            phone: user.phone,
-            membershipType: user.membershipType,
-            systemId: user.systemId,
+            memberInfo: f._id,
+            // name: user.name,
+            // phone: user.phone,
+            // membershipType: user.membershipType,
+            // systemId: user.systemId,
             handicap: user.handicap,
             role: TeamMemberPosition.MEMBER,
         }        
+    }
+    async announcementsGet(teamId:string) {
+        const filter:FilterQuery<AnnouncementDocument> = {};
+        filter['organization.id'] = teamId,
+        filter.$and = [
+            {publishDate: {$gte: this.myDate.toDateString() }},
+            {publishDate: {$lte: this.myDate.AddMonth(3)}},
+        ];
+        console.log(filter, filter.$and);
+        return FuncWithTryCatchNew(this.annOp, 'list', filter);
+    }
+    async announcementsPost(teamId:string, user:Partial<IMember>, tAnnCreateDto:Partial<IAnnouncement>, files: Array<Express.Multer.File> ) {
+        //announcementsPost(user,announcementCreateDto,files,org = ORGANIZATION)
+        const org:IOrganization = {
+            id: teamId,
+            type: ORGANIZATION_TYPE.TEAM,
+        };
+        tAnnCreateDto.isPublished = true;
+        tAnnCreateDto.publishedTs = Date.now();
+        return FuncWithTryCatchNew(this.annOp, 'announcementsPost', user, tAnnCreateDto, files, org);
+    }
+    async announcementsIdPut(teamId:string, user:Partial<IMember>, annId:string,tAnnUpdateDto:Partial<IAnnouncement>, files:Array<Express.Multer.File>) {
+        //announcementsIdPut(user,id,announceUpdateDto,files)
+        const org:IOrganization = {
+            id: teamId,
+            type: ORGANIZATION_TYPE.TEAM,
+        };
+        return FuncWithTryCatchNew(this.annOp, 'announcementsIdPut', user, annId, tAnnUpdateDto, files, org);
+    }
+    async announcementsDel(teamId:string, annId:string) {
+        const org:IOrganization = {
+            id: teamId,
+            type: ORGANIZATION_TYPE.TEAM,
+        };
+        return FuncWithTryCatchNew(this.annOp, 'delete', annId, org);        
     }
 }

@@ -10,6 +10,7 @@ import { CommonResponseDto } from '../dto/common/common-response.dto';
 import { TeamReserveReqDto } from '../dto/bookings/team-reserve-request.dto';
 import { ReservationCreateRequestDto } from '../dto/bookings/reservation-create-request.dto';
 import { ReservationModifyRequestDto } from '../dto/bookings/reservation-modify-request.dto';
+import { DateRangeQueryReqDto } from '../dto/common/date-range-query-request.dto';
 
 @Controller('reservation')
 @ApiTags('reservation')
@@ -66,10 +67,11 @@ export class BookingsController {
   })
   @Get('/available')
   async bookingsAvailable(
-    @Query('date') date: string,
+    @Query() dates: DateRangeQueryReqDto,
     @Res() res: Response,
   ) {
-    const rlt = await this.bookingsService.bookingsAvailable(date);
+    console.log(dates);
+    const rlt = await this.bookingsService.bookingsAvailable(dates);
 
     return res.status(HttpStatus.OK).json(rlt);
   }

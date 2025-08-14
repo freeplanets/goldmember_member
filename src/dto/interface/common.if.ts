@@ -1,5 +1,4 @@
-import { Filter } from 'aws-sdk/clients/devicefarm';
-import { MEMBER_EXTEND_GROUP, MEMBER_GROUP } from '../../utils/enum';
+import { MEMBER_EXTEND_GROUP, MEMBER_GROUP, ORGANIZATION_TYPE } from '../../utils/enum';
 import { ErrCode } from '../../utils/enumError';
 import { FilterQuery, UpdateQuery } from 'mongoose';
 
@@ -62,7 +61,10 @@ export interface IbulkWriteItem<D> {
     updateOne?: {
         filter: FilterQuery<D>;    // key of document like { key: "yourvalue" }
         update: UpdateQuery<D>;
-    }
+    },
+    deleteOne?: {
+      filter: FilterQuery<D>;
+    },
 }
 
 export interface ICommonLog {
@@ -74,6 +76,7 @@ export interface ICommonLog {
 export interface IReturnObj {
     data?: any,
     error?: ErrCode,
+    extra?: any;
 }
 
 export interface IHasFilterItem {
@@ -81,4 +84,10 @@ export interface IHasFilterItem {
     type?: string;
     targetGroups: any[];
     extendFilter?: MEMBER_EXTEND_GROUP[];    
+}
+
+export interface IOrganization {
+    id:string;
+    type: ORGANIZATION_TYPE;
+    name?: string;
 }

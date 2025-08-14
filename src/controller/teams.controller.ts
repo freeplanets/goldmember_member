@@ -1,24 +1,25 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, Req, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiHeader, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, HttpStatus, Param, Post, Put, Query, Req, Res, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommonResponseDto } from '../dto/common/common-response.dto';
 import TeamCreateRequestDto from '../dto/teams/team-create-request.dto';
 import { Response } from 'express';
-import { TeamMemberAddRequestDto } from '../dto/teams/team-member-add-request.dto';
 import { TeamDetailResponse } from '../dto/teams/team-detail-response';
 import { TeamUpdateRequestDto } from '../dto/teams/team-update-request.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { FileUploadDto } from '../dto/common/file-upload.dto';
 import { TeamMemberUpdateRequestDto } from '../dto/teams/team-member-update-request.dto';
 import { TokenGuard } from '../utils/tokens/token-guard';
 import { TeamActivitiesCreateRequestDto } from '../dto/teams/team-activities-create-request.dto';
 import { TeamActivitiesModifyRequestDto } from '../dto/teams/team-activities-modify-request.dto';
 import { ActivityParticipantsResponse } from '../dto/teams/activity-participants-response';
-import { CreditRecordRes } from '../dto/teams/credit-record-response';
 import { TeamActivitiesRes } from '../dto/teams/team-activities-response';
 import { TeamsService } from '../service/teams.service';
 import { FormDataPipe } from '../utils/pipes/form-data';
 import { FileNamePipe } from '../utils/pipes/file-name';
 import { DateRangeQueryReqDto } from '../dto/common/date-range-query-request.dto';
+import { AnnouncementsResponseDto } from '../dto/announcements/announcements-response.dto';
+import { TeamAnnouncementCreateDto } from '../dto/announcements/team-announcement-create.dto';
+import { TeamAnnouncementModifyDto } from '../dto/announcements/team-announcement-modify.dto';
 
 @Controller('teams')
 @ApiTags('teams')
@@ -39,6 +40,23 @@ export class TeamsController {
     @Get()
     async getTeams(@Query('search') search: string, @Res() res: Response) {
         const result = await this.teamsService.getTeams(search);
+        return res.status(HttpStatus.OK).json(result);
+    }
+
+    @ApiOperation({
+        summary: "查詢參與的球隊",
+        description: "查詢參與的球隊.",
+    })
+    @ApiResponse({
+        description: '成功或失敗',
+        type: CommonResponseDto,
+    })
+    @Get('myteam')
+    async getMyTeams(
+        @Req() req: any,
+        @Res() res: Response
+    ) {
+        const result = await this.teamsService.getMyTeams(req.user);
         return res.status(HttpStatus.OK).json(result);
     }
 
@@ -284,6 +302,24 @@ export class TeamsController {
     }
 
     @ApiOperation({
+        summary: '查詢球隊活動(最近三個月的)',
+        description: '查詢球隊活動(最近三個月的)',
+    })
+    @ApiResponse({
+        description: '成功或失敗',
+        type: TeamActivitiesRes,
+    })
+    @ApiParam({name: 'id', description: '球隊ID', required: true})
+    @Get('activities/last/:id')
+    async getActivitiesLastThreeMonths(
+        @Param('id') teamId: string,
+        @Res() res:Response,
+    ){
+        const result = await this.teamsService.getActivitiesLastThreeMonths(teamId);
+        return res.status(HttpStatus.OK).json(result);
+    }
+
+    @ApiOperation({
         summary: '取得活動參與者列表',
         description: '取得活動參與者列表',
     })
@@ -341,5 +377,108 @@ export class TeamsController {
     ){
         const result = await this.teamsService.leaveActivity(teamId, activityId, req.user);
         return res.status(HttpStatus.OK).json(result);
-    }   
+    } 
+    @ApiOperation({
+        summary: '查詢球隊公告(最近三個月的)',
+        description: '查詢球隊公告(最近三個月的)',
+    })
+    @ApiResponse({
+        description: '成功或失敗',
+        type: AnnouncementsResponseDto,
+    })
+    @ApiParam({name: 'id', description: '球隊ID', required:true})
+    @Get('announcements/:id')
+    async announcementsGet(
+        @Param('id') teamId: string,
+        @Req() req: Request,
+        @Res() res: Response,
+    ) {
+        const annRes = await this.teamsService.announcementsGet(teamId);
+        return res.status(HttpStatus.OK).json(annRes);
+    }
+    @ApiOperation({
+        summary: '新增公告',
+        description: '',
+    })
+    @ApiResponse({
+        description: '成功或失敗',
+        type: CommonResponseDto,
+    })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        description: '公告內容及上傳檔案',
+        type: TeamAnnouncementCreateDto,
+    })
+    @ApiParam({name: 'id', description: '球隊ID', required:true})
+    @UseInterceptors(AnyFilesInterceptor())
+    @Post('announcements/:id')
+    async announcementsPost(
+        @Param('id') teamId:string,
+        @Body() announcementCreateDto: TeamAnnouncementCreateDto,
+        @UploadedFiles() files: Array<Express.Multer.File>,
+        @Req() req: any,
+        @Res() res: Response,
+    ) {
+        const comRes = await this.teamsService.announcementsPost(
+            teamId,
+            req.user,
+            announcementCreateDto,
+            files,
+        );
+        return res.status(HttpStatus.OK).json(comRes);
+    }
+
+    @ApiOperation({
+        summary: '更新公告',
+        description: '',
+    })
+    @ApiResponse({
+        description: '成功或失敗',
+        type: CommonResponseDto,
+    })
+    @ApiConsumes('multipart/form-data')
+    @UseInterceptors(AnyFilesInterceptor())
+    @ApiParam({name: 'id', description: '球隊ID', required:true})
+    @ApiParam({name: 'annId', description: '公告ID', required:true})
+    @Put('announcements/:id/:annId')
+    async announcementsIdPut(
+        @Param('id') teamId: string,
+        @Param('annId') annId: string,
+        @Body() announceUpdateDto: TeamAnnouncementModifyDto,
+        @UploadedFiles() files: Array<Express.Multer.File>,
+        @Req() req: any,
+        @Res() res: Response,
+    ) {
+        const comRes = await this.teamsService.announcementsIdPut(
+            teamId,
+            req.user,
+            annId,
+            announceUpdateDto,
+            files,
+        );
+        return res.status(HttpStatus.OK).json(comRes);
+    }
+
+    @ApiOperation({
+        summary: '刪除公告',
+        description: '刪除公告',
+    })
+    @ApiResponse({
+        description: '成功或失敗',
+        type: CommonResponseDto,
+    })
+    @ApiParam({name: 'id', description: '球隊ID', required:true})
+    @ApiParam({name: 'annId', description: '公告ID', required:true})
+    @Delete('announcements/:id/:annId')
+    async announcementsDel(
+        @Param('id') teamId: string,
+        @Param('annId') annId: string,
+        @Res() res: Response,
+    ) {
+        const comRes = await this.teamsService.announcementsDel(
+            teamId,
+            annId,
+        );
+        return res.status(HttpStatus.OK).json(comRes);
+    }    
 }

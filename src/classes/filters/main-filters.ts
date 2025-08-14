@@ -5,6 +5,7 @@ import { IHasFilterItem, IHasId } from '../../dto/interface/common.if';
 import { KS_MEMBER_STYLE_FOR_SEARCH } from '../../utils/constant';
 //import { KsMemberDocument } from '../../dto/schemas/ksmember.schema';
 import { DateLocale } from '../common/date-locale';
+import { KsMemberDocument } from '../../dto/schemas/ksmember.schema';
 
 export class MainFilters {
   private myDate = new DateLocale();
@@ -116,82 +117,82 @@ export class MainFilters {
       console.log('filter:', filter);
       return filter;
   }
-  // KsMemberFilter(targetGroups:MEMBER_GROUP[], extendFilter:MEMBER_EXTEND_GROUP[]|undefined = undefined) {
-  //   // console.log('KsMemberFilter:', targetGroups, extendFilter);
-  //   let filter:FilterQuery<KsMemberDocument> = {};
-  //   let shareholder = false;
-  //   let dependents = false;
-  //   let mbrs:IHasId[] = [];
-  //   targetGroups.forEach((g) => {
-  //     console.log('g:', g, typeof g);
-  //     if (typeof g === 'object') {
-  //       mbrs.push(g);
-  //     } else {
-  //       if (g === MEMBER_GROUP.ALL || g === MEMBER_GROUP.SHARE_HOLDER) shareholder = true;
-  //       if (g === MEMBER_GROUP.ALL || g === MEMBER_GROUP.DEPENDENTS) dependents = true;
-  //     }
-  //   });
-  //   // console.log('chk:', shareholder, dependents);
-  //   if (shareholder) {
-  //     filter.$or = [
-  //       { 
-  //           $and: [
-  //               { no: { $regex: /^1\d{3}$/ } },
-  //               { no: { $lt: '1827' }},
-  //           ]
-  //       },
-  //       {
-  //           $and: [
-  //               { no: { $regex: /^2\d{3}$/ }},
-  //               { no: { $lt: '2175'}},
-  //           ]
-  //       }
-  //     ]
-  //   }
-  //   if (dependents) {
-  //     if (filter.$or) {
-  //       filter.$or.push({ no: { $regex: /^[56]\d{3}$/ }});
-  //     } else {
-  //       filter.no = {};
-  //       filter.no.$regex = /^[56]\d{3}$/;          
-  //     }
-  //   }
-  //   // console.log('check1:', filter.$or);
-  //   if (shareholder || dependents) {
-  //     filter.appUser = { $eq: '' };
-  //     if (extendFilter && extendFilter[0] === MEMBER_EXTEND_GROUP.BIRTH_OF_MONTH) {
-  //           const month = this.myDate.getMonth();
-  //           filter.birthMonth = month
-  //     }
-  //   }
-  //   if (mbrs.length > 0) {
-  //     const nos:string[] = [];
-  //     mbrs.forEach((obj) => {
-  //       if (KS_MEMBER_STYLE_FOR_SEARCH.test(obj.id)) {
-  //         nos.push(obj.id);
-  //       }
-  //     });
-  //     console.log('nos:', nos);
-  //     if (nos.length > 0) {
-  //       if (filter.$or) {
-  //         filter.$or.push({
-  //           no: { $in: nos }
-  //         })
-  //       } else if (filter.no) {
-  //         filter.$or = [
-  //           {no: filter.no },
-  //           {no: {$in: nos}}
-  //         ]
-  //       } else {
-  //         filter.no = { $in: nos },
-  //         filter.$or = [
-  //           { appUser: {$exists: false }},
-  //           { appUser: ''},     
-  //         ]
-  //       }
-  //     }
-  //   }
-  //   // console.log("getMember ks filter:", filter, filter.$or, filter.appUser);
-  //   return filter;
-  // }    
+  KsMemberFilter(targetGroups:MEMBER_GROUP[], extendFilter:MEMBER_EXTEND_GROUP[]|undefined = undefined) {
+    // console.log('KsMemberFilter:', targetGroups, extendFilter);
+    let filter:FilterQuery<KsMemberDocument> = {};
+    let shareholder = false;
+    let dependents = false;
+    let mbrs:IHasId[] = [];
+    targetGroups.forEach((g) => {
+      console.log('g:', g, typeof g);
+      if (typeof g === 'object') {
+        mbrs.push(g);
+      } else {
+        if (g === MEMBER_GROUP.ALL || g === MEMBER_GROUP.SHARE_HOLDER) shareholder = true;
+        if (g === MEMBER_GROUP.ALL || g === MEMBER_GROUP.DEPENDENTS) dependents = true;
+      }
+    });
+    // console.log('chk:', shareholder, dependents);
+    if (shareholder) {
+      filter.$or = [
+        { 
+            $and: [
+                { no: { $regex: /^1\d{3}$/ } },
+                { no: { $lt: '1827' }},
+            ]
+        },
+        {
+            $and: [
+                { no: { $regex: /^2\d{3}$/ }},
+                { no: { $lt: '2175'}},
+            ]
+        }
+      ]
+    }
+    if (dependents) {
+      if (filter.$or) {
+        filter.$or.push({ no: { $regex: /^[56]\d{3}$/ }});
+      } else {
+        filter.no = {};
+        filter.no.$regex = /^[56]\d{3}$/;          
+      }
+    }
+    // console.log('check1:', filter.$or);
+    if (shareholder || dependents) {
+      filter.appUser = { $eq: '' };
+      if (extendFilter && extendFilter[0] === MEMBER_EXTEND_GROUP.BIRTH_OF_MONTH) {
+            const month = this.myDate.getMonth();
+            filter.birthMonth = month
+      }
+    }
+    if (mbrs.length > 0) {
+      const nos:string[] = [];
+      mbrs.forEach((obj) => {
+        if (KS_MEMBER_STYLE_FOR_SEARCH.test(obj.id)) {
+          nos.push(obj.id);
+        }
+      });
+      console.log('nos:', nos);
+      if (nos.length > 0) {
+        if (filter.$or) {
+          filter.$or.push({
+            no: { $in: nos }
+          })
+        } else if (filter.no) {
+          filter.$or = [
+            {no: filter.no },
+            {no: {$in: nos}}
+          ]
+        } else {
+          filter.no = { $in: nos },
+          filter.$or = [
+            { appUser: {$exists: false }},
+            { appUser: ''},     
+          ]
+        }
+      }
+    }
+    // console.log("getMember ks filter:", filter, filter.$or, filter.appUser);
+    return filter;
+  }    
 }

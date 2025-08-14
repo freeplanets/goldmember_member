@@ -28,16 +28,6 @@ export class Team implements ITeam {
     @Prop()
     description: string;    //球隊描述
 
-    // @Prop({
-    //     type: TeamPositonInfo,
-    // })
-    // leader:	ITeamPositionInfo;  // 隊長
-
-    // @Prop({
-    //     type: TeamPositonInfo,
-    // })
-    // manager: ITeamPositionInfo; // 經理
-
     @Prop({
         type: TeamPositonInfo,
     })    

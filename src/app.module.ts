@@ -13,6 +13,8 @@ import { AnnouncementsModule } from './module/announcements.module';
 import { DevicesModule } from './module/devices.module';
 import { EventNewsModule } from './module/event-news.module';
 import { TeamsModule } from './module/teams.module';
+import { SystemParameterModule } from './module/system-parameter.module';
+import { SocialModuel } from './module/social.module';
 
 let dbase = process.env.MONGO_DB;
 if (process.env.IS_OFFLINE) dbase = process.env.LMONGO_DB;
@@ -34,7 +36,9 @@ if (process.env.IS_OFFLINE) dbase = process.env.LMONGO_DB;
         connectTimeoutMS: 5000,
       }),
     }),
-    AuthModule, BookingsModule, WeatherModule, CoursesModule, AnnouncementsModule, CouponsModule, DevicesModule, MemberModule, EventNewsModule, TeamsModule ],
+    AuthModule, BookingsModule, WeatherModule, CoursesModule, AnnouncementsModule, 
+    CouponsModule, DevicesModule, MemberModule, EventNewsModule, TeamsModule, 
+    SystemParameterModule, SocialModuel ],
   controllers: [],
   providers: [],
 })

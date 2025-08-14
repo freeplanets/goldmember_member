@@ -10,6 +10,7 @@ import { IReturnObj } from '../../dto/interface/common.if';
 import { ErrCode } from '../../utils/enumError';
 import { IUser } from '../../dto/interface/user.if';
 import { ReservationsQueryRequestDto } from '../../dto/bookings/reservations-query-request.dto';
+import { DateRangeQueryReqDto } from '../../dto/common/date-range-query-request.dto';
 
 
 export class ReserveOp {
@@ -62,14 +63,22 @@ export class ReserveOp {
         }
         return returnObj;
     }
-    async list(date:string):Promise<IReturnObj> {
+    async list(date:string|DateRangeQueryReqDto):Promise<IReturnObj> {
         const returnObj:IReturnObj = {};
-        const filter:FilterQuery<ReserveSectionDocument> = {
-            date,
-            //status: { $ne: ReserveStatus.CANCELLED },
+        const filter:FilterQuery<ReserveSectionDocument> = {}
+        if (typeof date === 'string') {
+            filter.date =  date;
+        } else {
+            if (!date.startDate) date.startDate = this.myDate.toDateString();
+            if (!date.endDate) date.endDate = date.startDate;
+            filter.$and = [
+                { date: { $gte: date.startDate}},
+                { date: {$lte: date.endDate}},
+            ]
         }
+        filter.status = { $ne: ReserveStatus.CANCELLED };
         console.log('list filter:', filter);
-        returnObj.data = await this.modelRS.find(filter, 'date timeSlot startTime endTime course courses type');
+        returnObj.data = await this.modelRS.find(filter, 'date timeSlot startTime endTime course courses type status');
         console.log('returnObj.data:', returnObj.data);
         return returnObj;
     }
@@ -93,6 +102,7 @@ export class ReserveOp {
                 data.id = uuidv1();
                 data.reservationId = createResv.id;
                 data.refId = createResv.teamId ? createResv.teamId : createResv.memberId;
+                data.status = ReserveStatus.PENDING;
             })
             const secDatas = await this.modelRS.insertMany(datas, {session});
             if (secDatas.length > 0) {
@@ -110,6 +120,8 @@ export class ReserveOp {
                 const his = this.createHistory(user, ActionOp.CREATE);
                 createResv.createdAt = his.transferDate;
                 createResv.history = [his];
+                createResv.status = ReserveStatus.PENDING;
+                // createResv.status = ReserveStatus.BOOKED;
                 const cr = await this.modelReserve.create([createResv], {session});
                 console.log('createReservation:', cr);
                 returnObj.data = cr;

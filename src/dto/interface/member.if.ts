@@ -56,6 +56,15 @@ export interface IMemberGrowth {
     shareholderActivity?: number;
     familyActivity?: number;
 }
+
+export interface IMemberTransferLog extends IModifiedBy {
+  id:string;
+  memberId:string;
+  memberName:string;
+  oldMembershipType?: MEMBER_LEVEL;
+  newMembershipType?: MEMBER_LEVEL;
+  isDirector?: boolean;
+}
 // 非app股東，查詢優惠券
 
 // 查詢 股號，手機，名字(含國興資料)

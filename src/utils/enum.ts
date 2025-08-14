@@ -192,3 +192,13 @@ export enum MessageType {
   INDIVIDUAL = 'individual',
   ALL = 'all',
 }
+
+export enum COLLECTION_REF {
+  Member = 'Member',
+  KsMember = 'KsMember',
+}
+
+export enum ORGANIZATION_TYPE {
+  COURT = 'court',
+  TEAM = 'team',
+}

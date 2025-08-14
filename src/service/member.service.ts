@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { SmsCodeUsage } from '../utils/enum';
+import { MEMBER_LEVEL, SmsCodeUsage } from '../utils/enum';
 import { MemberPutProfileRequestDto } from '../dto/member/member-put-profile-request.dto';
 import { MemberPasswordRequestDto } from '../dto/member/member-password-request.dto';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Member, MemberDcoument } from '../dto/schemas/member.schema';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { Upload2S3 } from '../utils/upload-2-s3';
 import { IMember } from '../dto/interface/member.if';
 import { CommonResponseDto } from '../dto/common/common-response.dto';
@@ -13,19 +13,34 @@ import { TempData } from '../dto/schemas/tempdata.schema';
 import { ProfileCheck } from '../../src/dto/member/profile-check';
 import { MemberProfileResponseDto } from '../dto/member/member-profile-response.dto';
 import { MEMBER_DETAIL_FIELDS } from '../utils/base-fields-for-searh';
+import { KsMember, KsMemberDocument } from '../dto/schemas/ksmember.schema';
+import { MemberGrowth, MemberGrowthDocument } from '../dto/schemas/member-growth.schema';
+import { MemberTransferLog, MemberTransferLogDocument } from '../dto/schemas/member-transfer-log.schema';
+import { Coupon, CouponDocument } from '../dto/schemas/coupon.schema';
+import { MemberShareholderSwitch } from '../classes/member/member-shareholder-switch';
+import { InvitationCode, InvitationCodeDocument } from '../dto/schemas/invitation-code.schema';
+import { MembersConvertToShareholderRequestDto } from '../dto/member/members-convert-to-shareholder-request.dto';
+import { IUser } from '../dto/interface/user.if';
+import { ShareholderSwitchReqDto } from '../dto/member/shareholder-switch-request.dto';
 
 @Injectable()
 export class MemberService {
   constructor(
-    @InjectModel(Member.name) private readonly memberModel:Model<MemberDcoument>,
+    @InjectModel(Member.name) private readonly modelMember:Model<MemberDcoument>,
     @InjectModel(TempData.name) private readonly tempDataModel:Model<TempData>,
+    @InjectModel(KsMember.name) private ksMemberModel:Model<KsMemberDocument>,
+    @InjectModel(MemberGrowth.name) private modelMG:Model<MemberGrowthDocument>,
+    @InjectModel(MemberTransferLog.name) private modelMTL:Model<MemberTransferLogDocument>,
+    @InjectModel(Coupon.name) private modelCoupon:Model<CouponDocument>,
+    @InjectModel(InvitationCode.name) private readonly modelIC:Model<InvitationCodeDocument>,
+    @InjectConnection() private readonly connection:mongoose.Connection,    
   ) {}
   async memberProfile(user:Partial<IMember>): Promise<any> {
     const mpRes = new MemberProfileResponseDto();
     try {
       // console.log('memberProfile', user)
       // name displayName membershipType isDirector passwordLastModifiedTs gender birthDate phone email joinDate expiryDate notes  lastLogin lastLoginIp isDirector
-      const member = await this.memberModel.findOne({id: user.id}, MEMBER_DETAIL_FIELDS);
+      const member = await this.modelMember.findOne({id: user.id}, MEMBER_DETAIL_FIELDS);
       if (member) {
         mpRes.data = member;
       } else {
@@ -46,7 +61,7 @@ export class MemberService {
     const comRes = new CommonResponseDto();
     try {
       console.log('memberPutProfile:', id);
-      const usr = await this.memberModel.findOne({id}, 'id phone');
+      const usr = await this.modelMember.findOne({id}, 'id phone');
       if (usr) {
         const profileChk = new ProfileCheck(memberPutProfile);
         if (profileChk.Error) {
@@ -57,7 +72,7 @@ export class MemberService {
         const memberProfile = profileChk.Data;
         console.log('memberProfile:', memberProfile);
         if (memberPutProfile.phone && memberPutProfile.phone !== usr.phone) {
-          const phoneExist = await this.memberModel.findOne({phone: memberPutProfile.phone});
+          const phoneExist = await this.modelMember.findOne({phone: memberPutProfile.phone});
           if (phoneExist) {
             comRes.ErrorCode = ErrCode.PHONE_EXIST;
             return comRes;
@@ -91,7 +106,7 @@ export class MemberService {
         }
 
         console.log("check2:", memberProfile);
-        await this.memberModel.updateOne({id}, memberProfile);  
+        await this.modelMember.updateOne({id}, memberProfile);  
       } else {
         comRes.ErrorCode = ErrCode.ITEM_NOT_FOUND;
       }
@@ -107,11 +122,11 @@ export class MemberService {
   ): Promise<CommonResponseDto> {
     const comRes = new CommonResponseDto();
     try {
-      const usr = await this.memberModel.findOne({id: member.id}, 'password');
+      const usr = await this.modelMember.findOne({id: member.id}, 'password');
       if (usr) {
         const isPassOk = usr.schema.methods.comparePassword(memberPasswordRequestDto.currentPassword, usr.password);
         if (isPassOk) {
-          const upd = await this.memberModel.updateOne(
+          const upd = await this.modelMember.updateOne(
             {id:member.id},
             {
               password: memberPasswordRequestDto.newPassword,
@@ -139,5 +154,53 @@ export class MemberService {
       return uploader.file_url;
     }
     return false;
-  }  
+  }
+  async membersConvertToShareholder(ssdto:ShareholderSwitchReqDto, mbr:Partial<IMember>) {
+    let comRes = new CommonResponseDto();
+    //console.log('memberschipType check:', mbr.membershipType , MEMBER_LEVEL.SHARE_HOLDER);
+    const myInfo = await this.modelMember.findOne({id: mbr.id}, 'membershipType');
+    if (myInfo.membershipType === MEMBER_LEVEL.SHARE_HOLDER) {
+      comRes.ErrorCode = ErrCode.SHARE_HOLDER_ALREADY_ERROR;
+      return comRes;
+    } else {
+      console.log('memberschipType check else:', mbr.membershipType , MEMBER_LEVEL.SHARE_HOLDER); 
+    }
+    const memberSW = new MemberShareholderSwitch(
+      this.modelMember,
+      this.ksMemberModel,
+      this.modelMTL,
+      this.modelMG,
+      this.modelCoupon,
+      this.connection,
+    );
+    try {
+      const f = await this.modelIC.findOne(ssdto);
+      if (f) {
+        if (f.isCodeUsed || f.isTransferred) {
+          comRes.ErrorCode = ErrCode.INVITATION_CODE_IS_USED;
+        } else {
+          const data:MembersConvertToShareholderRequestDto = new MembersConvertToShareholderRequestDto();
+          data.id = mbr.id;
+          data.membershipType = MEMBER_LEVEL.SHARE_HOLDER;
+          data.systemId = f.no;
+          const user:Partial<IUser> = {
+            id: mbr.id,
+            username: mbr.name,
+          }
+          comRes = await memberSW.membertypesSwitch(data, user);
+          if (!comRes.errorcode) {
+            const upd = await this.modelIC.updateOne({no:f.no}, {isCodeUsed: true});
+            console.log('upd:', upd);
+          }
+        }
+      } else {
+        comRes.ErrorCode = ErrCode.INVITATION_CODE_NOT_FOUND;
+      }
+    } catch (error) {
+      console.log('membersConvertToShareholder error:', error);
+      comRes.ErrorCode = ErrCode.UNEXPECTED_ERROR_ARISE;
+      comRes.error.extra = error.message;
+    }
+    return comRes;
+  }
 }

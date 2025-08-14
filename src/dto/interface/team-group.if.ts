@@ -19,7 +19,7 @@
 // 1. 團體可以進行預約，預約時需要提供團體信息、預約時間等,由成員報名參加,預約時提供名單。
 // 2. 目前由總幹事電話預約.
 
-import { MEMBER_LEVEL, TeamActivityRegistrationStatus, TeamActivityStatus, TeamMemberPosition, TeamMemberStatus, TeamStatus } from '../../utils/enum';
+import { COLLECTION_REF, MEMBER_LEVEL, TeamActivityRegistrationStatus, TeamActivityStatus, TeamMemberPosition, TeamMemberStatus, TeamStatus } from '../../utils/enum';
 import { IHasPhone } from './common.if';
 import { IModifiedBy } from './modifyed-by.if';
 
@@ -40,11 +40,13 @@ export interface ITeamMember {
     teamId?: string;    //球隊ID
     //member?: string | Partial<IMember>; //會員 object Id
     // from member table
+    memberInfo: string;
+    memberFrom?: COLLECTION_REF;  // 參照
     id?:	string; // 會員 ID
-    name?: string; // 會員姓名
-    phone?: string; // 電話
-    membershipType?: MEMBER_LEVEL; //會員類型
-    systemId?: string;   // 國興ID
+    // name?: string; // 會員姓名
+    // phone?: string; // 電話
+    // membershipType?: MEMBER_LEVEL; //會員類型
+    //systemId?: string;   // 國興ID
     handicap?: number;  // for first time
     // from member table -- end
     role?: TeamMemberPosition; // 角色
@@ -109,8 +111,8 @@ export interface ITeam {
     creditScore: number;    //信用評分
     logoUrl: string;    //球隊 Logo URL
     description: string;    //球隊描述
-    leader?: ITeamPositionInfo;  // 隊長
-    manager?: ITeamPositionInfo; // 經理
+    //leader: ITeamPositionInfo;  // 隊長
+    //manager: ITeamPositionInfo; // 經理
     contacter?: ITeamPositionInfo;   //連絡人
     lastActivity: string; //最近活動日期
     members?: ITeamMember[]; // 隊員清單

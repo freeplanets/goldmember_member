@@ -9,6 +9,8 @@ import { LoginToken, LoginTokenSchema } from '../dto/schemas/login-token.schema'
 import { TeamActivity, TeamActivitySchema } from '../dto/schemas/team-activity.schema';
 import { TeamsService } from '../service/teams.service';
 import { CreditRecord, CreditRecordSchema } from '../dto/schemas/credit-record.schema';
+import { KsMember, KsMemberSchema } from '../dto/schemas/ksmember.schema';
+import { Announcement, AnnouncementSchema } from '../dto/schemas/announcement.schema';
 
 @Module({
     imports: [
@@ -20,7 +22,8 @@ import { CreditRecord, CreditRecordSchema } from '../dto/schemas/credit-record.s
             { name: CreditRecord.name, schema: CreditRecordSchema},
             { name: LoginToken.name, schema: LoginTokenSchema},
             { name: TeamActivity.name, schema: TeamActivitySchema},
-            //{ name: KsMembe.name, schema: KsMemberSchema},
+            { name: KsMember.name, schema: KsMemberSchema},
+            { name: Announcement.name, schema: AnnouncementSchema}
         ]),
     ],
     controllers: [TeamsController],

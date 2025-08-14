@@ -68,7 +68,7 @@ export class AnnouncementsService {
         } else {
             filter = {
                 $or:[
-                    {targetGroups: { $elemMatch: { $eq: ANNOUNCEMENT_GROUP.ALL }}},
+                    // {targetGroups: { $elemMatch: { $eq: ANNOUNCEMENT_GROUP.ALL }}},
                     {targetGroups: { $elemMatch: { $eq: user.membershipType }}},
                     {targetGroups: { $elemMatch: { id: user.id}}}
                 ],

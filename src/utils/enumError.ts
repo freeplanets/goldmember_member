@@ -37,7 +37,15 @@ export enum ErrCode {
 	NOT_A_TEAM_MEMBER = 'NOT_A_TEAM_MEMBER',
 	TEAM_ACTIVITY_MAX_PARTICIPANTS = 'TEAM_ACTIVITY_MAX_PARTICIPANTS',
 	MEMBER_NOT_FOUND = 'MEMBER_NOT_FOUND',
+	ANNOUNCE_PUBLISH_ERROR = 'ANNOUNCE_PUBLISH_ERROR',
 	SELECTED_TIME_SECTION_ASSIGNED = 'SELECTED_TIME_SECTION_ASSIGNED',
+	KS_MEMBER_NOT_FOUND = 'KS_MEMBER_NOT_FOUND',
+	INVITATION_CODE_NOT_FOUND = 'INVITATION_CODE_NOT_FOUND',
+	INVITATION_CODE_IS_USED = 'INVITATION_CODE_IS_USED',
+	SHARE_HOLDER_ALREADY_ERROR = 'SHARE_HOLDER_ALREADY_ERROR',
+	FRIEND_EXISTS_ERROR = 'FRIEND_EXISTS_ERROR',
+	FRIEND_NOT_EXISTS_ERROR = 'FRIEND_NOT_EXISTS_ERROR',
+	ANNOUNCEMENT_NOT_FOUND = 'ANNOUNCEMENT_NOT_FOUND',
 }
 export enum ErrMsg {
 	MISS_PARAMETER = '參數不足',
@@ -76,7 +84,15 @@ export enum ErrMsg {
 	NOT_A_TEAM_MEMBER = '非球隊成員',
 	TEAM_ACTIVITY_MAX_PARTICIPANTS = '球隊活動人數已滿',
 	MEMBER_NOT_FOUND = '查無此會員',
+	ANNOUNCE_PUBLISH_ERROR = '公告發佈錯誤',
 	SELECTED_TIME_SECTION_ASSIGNED = '選定的時間段已被分配了，請選擇其他時段。',
+	KS_MEMBER_NOT_FOUND = '找不到國興會員,編號可能有錯',
+	INVITATION_CODE_NOT_FOUND = '無效的邀請碼',
+	INVITATION_CODE_IS_USED = '邀請碼已使用過',
+	SHARE_HOLDER_ALREADY_ERROR = '你(妳)已經是股東身份，無需轉換。',
+	FRIEND_EXISTS_ERROR = '已經是朋友了。',
+	FRIEND_NOT_EXISTS_ERROR = '你們還不是朋友了。',
+	ANNOUNCEMENT_NOT_FOUND = '查無公告。',
 }
 export const getErrorMessage = (code: ErrCode): string => {
 	const errKey = Object.keys(ErrCode).find((key) => ErrCode[key as keyof typeof ErrCode] === code);
@@ -96,7 +112,8 @@ export enum DtoErrMsg {
 	ID_ERROR = '代號錯誤',
 	UUID_STYLE_ERROR = 'UUID格式錯誤',
 	SHARE_HOLDER_ERROR = `membershipType 只能是 ${MEMBER_LEVEL.GENERAL_MEMBER} 或 ${MEMBER_LEVEL.DEPENDENTS}.`,
-	MISS_FREQUENCY = '當發行為自動時,參數 frequency 是比填的.'
+	MISS_FREQUENCY = '當發行為自動時,參數 frequency 是比填的.',
+	
 }
 // export const errorMsg = (code:ErrCode) => {
 // 	let errKey = '';

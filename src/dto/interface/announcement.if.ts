@@ -1,9 +1,10 @@
 import { ANNOUNCEMENT_READ_STATUS } from "../../utils/enum";
-import { IHasFilterItem } from "./common.if";
+import { IHasFilterItem, IOrganization } from "./common.if";
 import { IModifiedBy } from "./modifyed-by.if";
 
 export interface IAnnouncement extends IHasFilterItem {
     //id?: string;
+    organization: IOrganization;
     title?: string;
     content?: string;
     //type?: string;

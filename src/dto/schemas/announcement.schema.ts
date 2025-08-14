@@ -5,6 +5,8 @@ import { IModifiedBy } from "../interface/modifyed-by.if";
 import { Document } from "mongoose";
 import { Attachment } from "../announcements/attachment";
 import { ModifiedByData } from "../data/modified-by.data";
+import { OrganizationSchema } from "./organization.schema";
+import { IOrganization } from "../interface/common.if";
 
 export type AnnouncementDocument = Document & Announcement;
 
@@ -12,6 +14,12 @@ export type AnnouncementDocument = Document & Announcement;
 export class Announcement implements IAnnouncement {
     @Prop({index: true, required: true, unique: true})
     id?: string;
+
+    @Prop({
+        index: true,
+        type: OrganizationSchema
+    })
+    organization: IOrganization;
 
     @Prop()
     title?: string;
@@ -42,7 +50,7 @@ export class Announcement implements IAnnouncement {
     @Prop({
         type: [Attachment],
     })
-    attachments?: [IAttachmemt];
+    attachments?: IAttachmemt[];
 
     @Prop({
         type: Array<String>,
