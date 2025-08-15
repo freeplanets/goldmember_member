@@ -20,7 +20,7 @@ export class DeviceTokenGuard extends TokenGuard {
     async verifyToken(context: ExecutionContext) {
         const request = context.switchToHttp().getRequest();
         const token = this.extractTokenFormHeader(request);
-        const deviceId = request.body.deviceid;
+        const deviceId = request.body.deviceId;
         console.log('deviceId:', deviceId);
         console.log('dtoken:', token)
         if (!token) {
@@ -32,7 +32,7 @@ export class DeviceTokenGuard extends TokenGuard {
         let isLogin:Partial<ILoginToken>;
         try {
             isLogin = await this.checkDeviceLogin(deviceId, token);
-            // console.log('isLogin:', isLogin);    
+            console.log('isLogin:', isLogin);    
         } catch (e) {
             console.log('check2:', e);
             //throw new UnauthorizedException();
@@ -55,6 +55,7 @@ export class DeviceTokenGuard extends TokenGuard {
             // request['user'] = payload;
             request['device'] = payload;
             request['user'] = { id: isLogin.lastLoginId }
+            request['deviceId'] = deviceId;
         } catch (e) {
             if (e instanceof TokenExpiredError ) {
             // throw new UnauthorizedException();

@@ -32,6 +32,7 @@ import { Announcement, AnnouncementDocument } from '../dto/schemas/announcement.
 import { AnnounceOp } from '../classes/announcements/announce-op';
 import { FuncWithTryCatchNew } from '../classes/common/func.def';
 import { IAnnouncement } from '../dto/interface/announcement.if';
+import { MessageOp } from '../classes/announcements/message-op';
 
 interface I_TMPositon {
     T: TeamPositonInfo;
@@ -193,14 +194,17 @@ export class TeamsService {
             const tmbrs:Partial<ITeamMember>[] = [];
             tmbrs.push({
                 memberInfo: myInfo._id,
+                memberFrom: COLLECTION_REF.Member,
                 // id:	user.id,
                 // name: user.name,
                 // phone: user.phone,
                 // membershipType: user.membershipType,
                 // systemId: user.systemId,
+                joinDate: this.myDate.toDateString(),
                 handicap: user.handicap,
                 teamId: newTeam.id,
                 role: TeamMemberPosition.LEADER,
+                status: TeamMemberStatus.CONFIRMED,
             })
             const session = await this.connection.startSession();
             session.startTransaction()
@@ -297,18 +301,29 @@ export class TeamsService {
     async joinTeamMember(teamId: string, user:Partial<IMember>): Promise<CommonResponseDto> {
         const comRes = new CommonResponseDto();
         try {
-            const teamMbr = await this.modelTeamMember.findOne({teamId, id: user.id});
+            const me = await this.modelMember.findOne({id: user.id});
+            const teamMbr = await this.modelTeamMember.findOne({teamId, memberInfo: me._id});
+            // console.log('teamMbr:', teamMbr)
             if (teamMbr) {
                 comRes.ErrorCode = ErrCode.TEAM_MEMBER_ALREADY_EXISTS;
             } else {
                 const newMember = await this.createNewMember(teamId, user);
                 newMember.status = TeamMemberStatus.APPLYING;
-                const ins = await this.modelTeamMember.create(newMember);
+                // console.log('newMember:', newMember);
+                const session = await this.connection.startSession();
+                session.startTransaction();
+                const ins = await this.modelTeamMember.create([newMember], {session});
+                // console.log('ins:', ins);
                 if (ins) {
-                    comRes.data = ins;
+                    const upd = await this.modelTeam.updateOne({id: teamId}, {$push: { members: ins[0]._id }}, {session});
+                    if (upd.acknowledged) {
+                        await session.commitTransaction();
+                        comRes.data = ins;                    
+                    }
                 } else {
                     comRes.ErrorCode = ErrCode.DATABASE_ACCESS_ERROR;
                 }
+                await session.endSession();
             }
         } catch (error) {
             console.error('Error adding team member:', error);
@@ -373,22 +388,29 @@ export class TeamsService {
     ): Promise<CommonResponseDto> {
         const comRes = new CommonResponseDto();
         try {
-            const existingMember = await this.modelTeamMember.findOne({ teamId, id: user.id });
-            if (!existingMember) {
+            const me = await this.modelMember.findOne({id: user.id}, 'id');
+            if (me) {
+                const existingMember = await this.modelTeamMember.findOne({ teamId, memberInfo: me._id });
+                if (!existingMember) {
+                    comRes.ErrorCode = ErrCode.MEMBER_NOT_FOUND;
+                    return comRes;
+                }
+                // Delete the member from the team
+                const session = await this.connection.startSession();
+                session.startTransaction();
+                //const upd = await this.modelTeamMember.updateOne({ teamId, id: user.id }, {status: TeamMemberStatus.CANCELLED}, { session });
+                const del = await this.modelTeamMember.deleteOne({ teamId, memberInfo: me._id }, { session });
+                console.log('del:', del);
+                if (del.acknowledged) {
+                    // Remove the member's ID from the team's members array
+                    await this.modelTeam.updateOne({ id: teamId }, { $pull: { members: existingMember._id } }, { session });
+                    await session.commitTransaction();
+                    console.log('Team member leave successfully:', existingMember);
+                }
+                await session.endSession();
+            } else {
                 comRes.ErrorCode = ErrCode.MEMBER_NOT_FOUND;
-                return comRes;
             }
-            // Delete the member from the team
-            const session = await this.connection.startSession();
-            session.startTransaction();
-            const upd = await this.modelTeamMember.updateOne({ teamId, id: user.id }, {status: TeamMemberStatus.CANCELLED}, { session });
-            if (upd.acknowledged) {
-                // Remove the member's ID from the team's members array
-                await this.modelTeam.updateOne({ id: teamId }, { $push: { members: existingMember._id } }, { session });
-                await session.commitTransaction();
-                console.log('Team member leave successfully:', existingMember);
-            }
-            await session.endSession();
         } catch (error) {
             console.error('Error deleting team member:', error);
             comRes.ErrorCode = ErrCode.UNEXPECTED_ERROR_ARISE;
@@ -398,28 +420,89 @@ export class TeamsService {
     }
     async acceptMember(teamId:string, memberId:string, user:Partial<IMember>) {
         const comRes = new CommonResponseDto();
-        const session = await this.connection.startSession();
-        session.startTransaction();
+        // const session = await this.connection.startSession();
+        // session.startTransaction();
         try {
-            const upd = await this.modelTeamMember.findOneAndUpdate({teamId, id: memberId},{status: TeamMemberStatus.CONFIRMED}, {session});
-            console.log('acceptMember upd:', upd);
-            if (upd) {
-                const ins = await this.modelTeam.updateOne({id: teamId}, {$pull: {members: upd._id}}, {session});
-                console.log('acceptMember ins:', ins);
-                if (ins) {
-                    await session.commitTransaction();
+            //console.log('memberId:', memberId);
+            const isNotMgr = await this.isNotTeamManageLevel(teamId, user._id);
+            if (isNotMgr) {
+                comRes.ErrorCode = isNotMgr;
+                return comRes;
+            }            
+            const mbr = await this.modelMember.findOne({id: memberId}, 'id');
+            console.log('mbr:', mbr, memberId);
+            if (mbr) {
+                const upd = await this.modelTeamMember.findOneAndUpdate(
+                    {teamId, memberInfo: mbr._id},
+                    {status: TeamMemberStatus.CONFIRMED}, 
+                    // {session}
+                );
+                console.log('acceptMember upd:', upd);
+                if (upd) {
+                    comRes.data = upd;
+                    // const ins = await this.modelTeam.updateOne({id: teamId}, {$push: {members: upd._id}}, {session});
+                    // console.log('acceptMember ins:', ins);
+                    // if (ins) {
+                    //     await session.commitTransaction();
+                    // }
                 }
+            } else {
+                comRes.ErrorCode = ErrCode.MEMBER_NOT_FOUND;
             }
         } catch (error) {
             console.log('acceptMember', error);
-            session.abortTransaction();
+            // session.abortTransaction();
             comRes.ErrorCode = ErrCode.UNEXPECTED_ERROR_ARISE;
             comRes.error.extra = error.message;
         }
-        session.endSession();
+        //session.endSession();
         return comRes;        
     }
-
+    async denyMember(teamId:string, memberId:string, user:Partial<IMember>, notes:string) {
+        const msgOp = new MessageOp(this.modelAnn);
+        const comRes = new CommonResponseDto();
+        try {
+            const isNotMgr = await this.isNotTeamManageLevel(teamId, user._id);
+            if (isNotMgr) {
+                comRes.ErrorCode = isNotMgr;
+                return comRes;
+            }
+            const member = await this.modelMember.findOne({id: memberId}, 'id');
+            if (member) {
+                const existingMember = await this.modelTeamMember.findOne({ teamId, memberInfo: member._id });
+                if (!existingMember) {
+                    comRes.ErrorCode = ErrCode.MEMBER_NOT_FOUND;
+                    return comRes;
+                }
+                // Delete the member from the team
+                const session = await this.connection.startSession();
+                session.startTransaction();
+                //const upd = await this.modelTeamMember.updateOne({ teamId, id: user.id }, {status: TeamMemberStatus.CANCELLED}, { session });
+                const del = await this.modelTeamMember.deleteOne({ teamId, memberInfo: member._id }, { session });
+                console.log('del:', del);
+                if (del.acknowledged) {
+                    // Remove the member's ID from the team's members array
+                    const team = await this.modelTeam.findOneAndUpdate({ id: teamId }, { $pull: { members: existingMember._id } }, { session });
+                    await session.commitTransaction();
+                    console.log('Team member leave successfully:', existingMember);
+                    const memo = notes ? ' memo:' + notes : '';
+                    const title = `${team.name}通知`;
+                    const msg = `${team.name}通知，您的入隊申請己取消，特此告之。${memo}`;
+                    msgOp.createPersonalMsg(memberId, title ,msg);
+                    const ans = await msgOp.send();
+                    console.log('send message:', ans);
+                }
+                await session.endSession();
+            } else {
+                comRes.ErrorCode = ErrCode.MEMBER_NOT_FOUND;
+            }
+        } catch (error) {
+            console.error('Error deleting team member:', error);
+            comRes.ErrorCode = ErrCode.UNEXPECTED_ERROR_ARISE;
+            comRes.error.extra = error.message;
+        }
+        return comRes;        
+    }
     async createTeamActivity(teamId:string, taCreate:Partial<ITeamActivity>, user:Partial<IMember>):Promise<CommonResponseDto> {
         const comRes = new CommonResponseDto();
         const session = await this.connection.startSession();
@@ -503,24 +586,27 @@ export class TeamsService {
                 .findOne({id: activityId}, 'participants')
                 .populate({ 
                     path:'participants',
+                    select: 'role handicap memberInfo memberFrom',
                     populate: {
-                        path: 'member',
+                        path: 'memberInfo',
+                        select: 'id no name pic handicap',
                     }
                 }).exec();
             if (act) {
                 const mbrs = act.participants.map((p:IActivityParticipants) => {
-                    const nMbr:Partial<IActMemberInfo> = {
-                        ...(p.member as Partial<IMember>),
-                        registrationDate: p.registrationDate,
-                        status: p.status,
-                        // id: p.member.id,
-                        // name: p.name,
-                        // phone: p.phone,
-                        // membershipType: p.membershipType,
-                        // registrationDate: f.registrationDate,
-                        // status: f.status,
-                    };
-                    return nMbr;
+                    // console.log('getAct:', p);
+                    // const nMbr:Partial<IActMemberInfo> = {
+                    //     ...(p.member as Partial<IMember>),
+                    //     registrationDate: p.registrationDate,
+                    //     status: p.status,
+                    //     // id: p.member.id,
+                    //     // name: p.name,
+                    //     // phone: p.phone,
+                    //     // membershipType: p.membershipType,
+                    //     // registrationDate: f.registrationDate,
+                    //     // status: f.status,
+                    // };
+                    return p; //nMbr;
                 });
                 comRes.data = mbrs;
             } else {
@@ -656,7 +742,8 @@ export class TeamsService {
     async joinActivity(teamId:string, activityId:string, user:Partial<IMember>) {
         const comRes = new CommonResponseDto();
         try {
-            const tmr = await this.modelTeamMember.findOne({teamId, id: user.id, status: TeamMemberStatus.CONFIRMED});
+            const tmr = await this.modelTeamMember.findOne({teamId, memberInfo: user._id, status: TeamMemberStatus.CONFIRMED});
+            console.log('joinActivity:', tmr, user._id, user.id);
             if (tmr) {
                 const jAct = await this.modelTeamActivity.findOne({id: activityId});
                 if (jAct.participants.length < jAct.maxParticipants) {
@@ -678,7 +765,8 @@ export class TeamsService {
     async leaveActivity(teamId:string, activityId:string, user:Partial<IMember>) {
         const comRes = new CommonResponseDto();
         try {
-            const tmr = await this.modelTeamMember.findOne({teamId, id: user.id, status: TeamMemberStatus.CONFIRMED});
+            const tmr = await this.modelTeamMember.findOne({teamId, memberInfo: user._id, status: TeamMemberStatus.CONFIRMED});
+            console.log('leaveAct:', tmr, )
             if (tmr) {
                 const actUpd = await this.modelTeamActivity.updateOne({id: activityId}, {$pull: { participants: tmr._id}});
                 console.log(actUpd)
@@ -696,8 +784,9 @@ export class TeamsService {
         const f = await this.modelMember.findOne({id: user.id});
         return {
             teamId,
-            id: user.id,
+            // id: user.id,
             memberInfo: f._id,
+            memberFrom: COLLECTION_REF.Member,
             // name: user.name,
             // phone: user.phone,
             // membershipType: user.membershipType,
@@ -740,5 +829,40 @@ export class TeamsService {
             type: ORGANIZATION_TYPE.TEAM,
         };
         return FuncWithTryCatchNew(this.annOp, 'delete', annId, org);        
+    }
+    async reformTeamMemberData() {
+        let bulks:IbulkWriteItem<TeamDocument>[] = [];
+        let bulkT:IbulkWriteItem<TeamMemberDocument>[] = [];
+        const oldTmrs = await this.modelTeamMember.find({memberInfo: {$exists: false}});
+        bulks = oldTmrs.map((itm) => {
+            bulkT.push({
+                deleteOne: {
+                    filter: { _id: itm._id },
+                }
+            });
+            return {
+                updateOne: {
+                    filter: { id: itm.teamId },
+                    update: {
+                        $pull: { members: itm._id }
+                    }
+                }
+            }
+        });
+        console.log(bulkT)
+        const upds = await this.modelTeam.bulkWrite(bulks as any);
+        const dels = await this.modelTeamMember.bulkWrite(bulkT as any);
+        return { upds, dels};
+    }
+    async isNotTeamManageLevel(teamId:string, _id:string) {
+        const tmr = await this.modelTeamMember.findOne({teamId, memberInfo: _id});
+        if (tmr) {
+            if (tmr.role !== TeamMemberPosition.LEADER && tmr.role !== TeamMemberPosition.MANAGER) {
+                return ErrCode.TEAM_LEVEL_ERROR;
+            }
+        } else {
+            return ErrCode.NOT_A_TEAM_MEMBER;
+        }
+        return false;
     }
 }

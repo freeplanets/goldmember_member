@@ -72,7 +72,7 @@ describe('AuthService (e2e)', () => {
     });
     it('/auth/deviceRefreshToken POST', async ()=> {
         const device = new DeviceRefreshTokenDto();
-        device.deviceid = '1dca3159-465a-48de-b248-9706e1766001';
+        device.deviceId = '1dca3159-465a-48de-b248-9706e1766001';
         return request(app.getHttpServer())
         .post('/auth/deviceRefreshToken')
         .set('Authorization', `Bearer ${deviceRefreshToken}`)

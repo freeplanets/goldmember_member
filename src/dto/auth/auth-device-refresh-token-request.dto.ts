@@ -6,5 +6,5 @@ export class DeviceRefreshTokenDto {
         description:'device refresh token',
     })
     @IsString()
-    deviceid: string;
+    deviceId: string;
 }

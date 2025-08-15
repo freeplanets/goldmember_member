@@ -36,6 +36,7 @@ export interface IMember {
   announcementReadTs?: number; // 公告已讀時間戳
   devices: Partial<ILoginDevice>[]; //會員登入設備
   isCouponTriggered: boolean; // 因轉送優惠券而產生的會員
+  _id?:string;
 }
 
 export interface IMemberActivity {

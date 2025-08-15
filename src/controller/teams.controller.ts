@@ -20,6 +20,8 @@ import { DateRangeQueryReqDto } from '../dto/common/date-range-query-request.dto
 import { AnnouncementsResponseDto } from '../dto/announcements/announcements-response.dto';
 import { TeamAnnouncementCreateDto } from '../dto/announcements/team-announcement-create.dto';
 import { TeamAnnouncementModifyDto } from '../dto/announcements/team-announcement-modify.dto';
+import { TeamAcceptReqDto } from '../dto/teams/accept-request.dto';
+import { TeamDenyReqDto } from '../dto/teams/deny-request.dto';
 
 @Controller('teams')
 @ApiTags('teams')
@@ -209,11 +211,12 @@ export class TeamsController {
         type: CommonResponseDto,
     })
     @ApiParam({name: 'id', description: '球隊 ID', required: true})
-    @ApiParam({name: 'memberId', description: '會員 ID', required: true})
+    //@ApiParam({name: 'memberId', description: '會員 ID', required: true})
     @Post('accept/:id')
     async acceptMember(
         @Param('id') teamId: string,
-        @Param('memberId') memberId: string,
+        //@Param('memberId') memberId: string,
+        @Body() { memberId }:TeamAcceptReqDto,
         @Req() req: any,
         @Res() res: Response,
     ){
@@ -221,6 +224,27 @@ export class TeamsController {
         return res.status(HttpStatus.OK).json(result);
     }
 
+    @ApiOperation({
+        summary: "拒絕加入球隊",
+        description: "拒絕加入球隊.",
+    })
+    @ApiResponse({
+        description: '成功或失敗',
+        type: CommonResponseDto,
+    })
+    @ApiParam({name: 'id', description: '球隊 ID', required: true})
+    // @ApiParam({name: 'memberId', description: '會員 ID', required: true})
+    @Post('deny/:id')
+    async denyMember(
+        @Param('id') teamId: string,
+        // @Param('memberId') memberId: string,
+        @Body() {memberId, notes}:TeamDenyReqDto,
+        @Req() req: any,
+        @Res() res: Response,
+    ){
+        const result = await this.teamsService.denyMember(teamId, memberId, req.user, notes);
+        return res.status(HttpStatus.OK).json(result);
+    }    
     // @ApiOperation({
     //     summary: "查詢球隊信用評分",
     //     description: "查詢球隊信用評分.",
@@ -479,6 +503,13 @@ export class TeamsController {
             teamId,
             annId,
         );
+        return res.status(HttpStatus.OK).json(comRes);
+    }
+    @Delete('teammember/reformdata')
+    async reformTeamMemberData(
+        @Res() res: Response,
+    ) {
+        const comRes = await this.teamsService.reformTeamMemberData();
         return res.status(HttpStatus.OK).json(comRes);
     }    
 }

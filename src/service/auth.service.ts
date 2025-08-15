@@ -71,6 +71,7 @@ export class AuthService {
         console.log("isPassOk:", isPassOk);
         if (isPassOk) {
           const mbrInfo:Partial<IMember> = {
+            _id: mbr._id,
             id: mbr.id,
             name: mbr.name,
             displayName: mbr.displayName,
@@ -359,7 +360,7 @@ export class AuthService {
     const ahRes = new AuthRefreshTokenResponse();
     try {
       const { user } = req as any;
-      // console.log("user:", user);
+      console.log("user:", user);
       // delete user.exp;
       // delete user.iat;
       // const ans = this.jwt.sign(user);
@@ -389,7 +390,9 @@ export class AuthService {
   async authDeviceRefreshToken(req:Request):Promise<AuthResponseDto> {
     const ahRes = new AuthResponseDto();
     try {
-      const { user, device } = req as any;
+      const { user, device, deviceId } = req as any;
+      console.log('authDeviceRefreshToken user:', user)
+      console.log('authDeviceRefreshToken deviceId:', deviceId);
       // if (device.iat) delete device.iat;
       // if (device.exp) delete device.exp;
       const loginD:Partial<ILoginDevice> = {};
@@ -427,14 +430,14 @@ export class AuthService {
           const upsert = await this.modelLoginToken.updateOne({uid:user.id}, {token: ans.token}, {upsert:true});
           console.log('upsert:', upsert);
           const updev = await this.modelLoginToken.updateOne(
-            {uid:device.deviceId}, 
+            {uid:deviceId}, 
             {
               token: ans.deviceRefreshToken,
               lastLoginId: mbr.id,
             },
             {upsert: true}
           );
-          console.log('updev:', updev);
+          console.log('updev:', updev, deviceId);
           await this.addMemberActivity(mbr.id, mbr.membershipType, Date.now());
         } else {
           ahRes.ErrorCode = ErrCode.VERIFY_CODE_ERROR;

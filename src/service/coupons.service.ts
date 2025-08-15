@@ -159,6 +159,7 @@ export class CouponsService {
         console.log(bulk);
         //const events = new MessageOp(this.modelAnn);
         const dt = this.myDate.toDateTimeString();
+        const title = '優惠券轉贈通知';
         if (smsPhone) {
           const phone = smsPhone.indexOf('#')>0 ? smsPhone.split('#')[0] : smsPhone;
           //const msg = `林口高爾夫球場通知，${mbr.name}剛剛發送了${bulks.length}張優惠券給你，請查看。`;
@@ -167,11 +168,11 @@ export class CouponsService {
           console.log('sms:', sms);
         } else {
           const msgApp = lang.zhTW.CouponTransforToAppUser.replace('{from}', mbr.name).replace('{datetime}', dt).replace('{number}', bulks.length+'');
-          this.msgOp.createPersonalMsg(targetId, msgApp);
+          this.msgOp.createPersonalMsg(targetId, title, msgApp);
           //console.log('transfer to', ans1);
         }
         const msgSelf = lang.zhTW.CouponTransferToForSelf.replace('{datetime}', dt).replace('{number}', bulks.length+'').replace('{to}', targetName);
-        this.msgOp.createPersonalMsg(mbr.id, msgSelf);
+        this.msgOp.createPersonalMsg(mbr.id, title, msgSelf);
         const ans = await this.msgOp.send();
         console.log('transfer msg self:', ans);
       }
@@ -257,10 +258,11 @@ export class CouponsService {
         const upds = await this.modelCoupon.bulkWrite(bulks as any);
         console.log('upds:', upds);
         const dt = this.myDate.toDateTimeString();
+        const title = '優惠券轉贈通知';
         const msg1 = lang.zhTW.CouponTransforToAppUser.replace('{from}', fromName).replace('{datetime}', dt).replace('{number}', bulks.length + '');
-        this.msgOp.createPersonalMsg(mbr.id, msg1)
+        this.msgOp.createPersonalMsg(mbr.id, title, msg1)
         const msg2 = lang.zhTW.CouponTransferToForSelf.replace('{datetime}', dt).replace('{number}', bulks.length + '').replace('{to}', mbr.name);
-        this.msgOp.createPersonalMsg(cpAccept.currentOwnerId, msg2);
+        this.msgOp.createPersonalMsg(cpAccept.currentOwnerId,title, msg2);
         const ans = await this.msgOp.send();
         console.log('ans:', ans);
       }
