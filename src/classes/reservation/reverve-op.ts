@@ -6,11 +6,15 @@ import mongoose, { FilterQuery, Model, UpdateQuery } from 'mongoose';
 import { ActionOp, ReserveFrom, ReserveStatus, ReserveType, TimeSectionType } from '../../utils/enum';
 import { v1 as uuidv1 } from 'uuid';
 import { DateLocale } from '../common/date-locale';
-import { IReturnObj } from '../../dto/interface/common.if';
+import { IbulkWriteItem, IReturnObj } from '../../dto/interface/common.if';
 import { ErrCode } from '../../utils/enumError';
 import { IUser } from '../../dto/interface/user.if';
 import { ReservationsQueryRequestDto } from '../../dto/bookings/reservations-query-request.dto';
 import { DateRangeQueryReqDto } from '../../dto/common/date-range-query-request.dto';
+import { MemberDocument } from '../../dto/schemas/member.schema';
+import { TeamDocument } from '../../dto/schemas/team.schema';
+import { ReservationStatusRequestDto } from '../../dto/bookings/reservation-status.request.dto';
+import { ParticipantData } from '../../dto/bookings/participant.data';
 
 
 export class ReserveOp {
@@ -18,8 +22,18 @@ export class ReserveOp {
     constructor(
         private readonly modelReserve:Model<ReservationsDocument>,
         private readonly modelRS:Model<ReserveSectionDocument>,
+        private readonly modelMember:Model<MemberDocument>,
+        private readonly modelTeam:Model<TeamDocument>,
         private readonly connection:mongoose.Connection,
     ) {}
+    async getById(id:string):Promise<IReturnObj> {
+        const returnObj:IReturnObj = {};
+        returnObj.data = await this.modelReserve.findOne({id}).populate({
+            path: 'data',
+            select: 'date timeSlot startTime endTime course courses type',
+        });
+        return returnObj;
+    }     
     async get(rqr:ReservationsQueryRequestDto, user:Partial<IMember>|undefined):Promise<IReturnObj> {
         const returnObj:IReturnObj = {
             data: [],
@@ -36,7 +50,8 @@ export class ReserveOp {
             ];
         }
         if (user) {
-            matches.refId = user.id;
+            //matches.refId = user.id;
+            matches.appointment = user.id;
         }
         console.log('matches', matches);
         const lst = await this.modelRS.find(matches, 'reservationId');
@@ -98,14 +113,18 @@ export class ReserveOp {
             const session = await this.connection.startSession();
             session.startTransaction();
             createResv.id = uuidv1();
+            //createResv.appointment = user.id;
             datas.forEach((data) => {
                 data.id = uuidv1();
                 data.reservationId = createResv.id;
                 data.refId = createResv.teamId ? createResv.teamId : createResv.memberId;
                 data.status = ReserveStatus.PENDING;
+                data.appointment = user.id;
             })
             const secDatas = await this.modelRS.insertMany(datas, {session});
             if (secDatas.length > 0) {
+                createResv = await this.fillMemberInfo(createResv);
+                createResv = await this.fillTeamInfo(createResv);
                 createResv.data = secDatas.map((_id) => _id);
                 // const his:Partial<IReserveHistory> = {};
                 const opusr:any = user;
@@ -133,6 +152,73 @@ export class ReserveOp {
         }
         return returnObj;
     }
+    async refillInfo():Promise<void> {
+        const bulks:IbulkWriteItem<ReservationsDocument>[] = [];
+        const res = await this.modelReserve.find();
+        console.log('res length:', res.length);
+        for(let i=0, n=res.length;i<n;i++) {
+            let itm = res[i];
+            let reserdta:Partial<IReservations>= {};
+            if ((itm.teamId && !itm.teamName)) {
+                reserdta.teamId = itm.teamId;
+                reserdta = await this.fillTeamInfo(reserdta);
+                delete reserdta.teamId;
+                if (reserdta.teamName) {
+                    bulks.push({
+                        updateOne: {
+                            filter: { id: itm.id },
+                            update: {$set: reserdta},
+                        }
+                    });
+                }
+            } else if (itm.memberId && !itm.memberName) {
+                reserdta.memberId = itm.memberId;
+                reserdta = await this.fillMemberInfo(reserdta);
+                delete reserdta.memberId;
+                if (reserdta.memberName) {
+                    bulks.push({
+                        updateOne: {
+                            filter: { id: itm.id },
+                            update: reserdta,
+                        }
+                    });
+                }
+            }
+        }
+        if (bulks.length > 0) {
+            bulks.forEach((itm) => {
+                console.log(itm.updateOne.filter, itm.updateOne.update.$set);
+            });
+            const upd = await this.modelReserve.bulkWrite(bulks as any);
+            console.log('upd:', upd);
+        }
+    }
+    async fillMemberInfo(createResv:Partial<IReservations>):Promise<Partial<IReservations>>{
+        if (createResv.memberId) {
+            const member = await this.modelMember.findOne({id: createResv.memberId}, 'name phone membershipType');
+            console.log('fillMemberInfo:', member);
+            if (member) {
+                createResv.memberName = member.name;
+                createResv.memberName = member.phone;
+                createResv.membershipType = member.membershipType;
+            }
+        }
+        console.log(createResv);
+        return createResv;
+    }
+    async fillTeamInfo(createResv:Partial<IReservations>):Promise<Partial<IReservations>> {
+        if (createResv.teamId) {
+            const team = await this.modelTeam.findOne({id: createResv.teamId}, 'name contacter');
+            console.log('fillTeamInfo:', team);
+            if (team) {
+                createResv.teamName  = team.name;
+                createResv.contactPerson = team.contacter.name;
+                createResv.contactPhone = team.contacter.phone;
+            }
+        }
+        console.log(createResv);
+        return createResv;
+    }
     async modify(id:string, mfyResv:Partial<IReservations>, user:any):Promise<IReturnObj> {
         const returnObj:IReturnObj = {}
         //const data:Partial<IReservations> = {};
@@ -144,38 +230,88 @@ export class ReserveOp {
         let isExisted = false;
         let modifyData = false; //有修改時段
         if (mfyResv.data) {
-            modifyData;
+            modifyData = true;
             const datas = mfyResv.data;
             console.log('createReservation', typeof datas, datas);
             isExisted = await this.timeSectionCheck(datas, id);         
         }
+        console.log('isExisted:', isExisted);
         if (!isExisted) {
             const session = await this.connection.startSession();
             session.startTransaction();
             if (modifyData) {
-                const datas = mfyResv.data; 
-                datas.forEach((itm) => {
-                    itm.id = uuidv1(),
-                    itm.reservationId = id,
+                const datas = mfyResv.data;
+                console.log('datas:', datas);
+                datas.forEach((itm:any) => {
+                    if (itm._id) delete itm._id;
+                    itm.id = uuidv1();
+                    itm.reservationId = id;
                     itm.refId = foundRev.teamId ? foundRev.teamId : foundRev.memberId;
                 });
+                console.log('datas after forEach:', datas);
+                const delRS = await this.modelRS.deleteMany({reservationId: id}, {session});
+                console.log('delRes:', delRS);
                 const secDatas = await this.modelRS.insertMany(datas, {session});
+                console.log('secDatas:', secDatas);
                 if (secDatas.length > 0) {
-                    mfyResv.data = secDatas.map((_id) => _id);
+                    mfyResv.data = secDatas.map((itm) => itm._id);
                 }
             }
             const modifyResv:UpdateQuery<ReservationsDocument> = mfyResv;
             const his = this.createHistory(user, ActionOp.MODIFY);
+            console.log('modifyReservation his:', his);
             modifyResv.$push = { history: his };
+            console.log('modifyReservation modifyResv:', modifyResv);
             const upd = await this.modelReserve.updateOne({id}, modifyResv);
             console.log('modifyReservation upd:', upd);
+            await session.commitTransaction();
+            await session.endSession();
             returnObj.data = upd;
         } else {
             returnObj.error = ErrCode.SELECTED_TIME_SECTION_ASSIGNED;
         }
         return returnObj;
     }
-    async cancel(id:string, user:Partial<IUser | IMember>, teamId: string):Promise<IReturnObj>{
+    async modifyStatus(id:string,resv:ReservationStatusRequestDto, user:Partial<IUser | IMember>) {
+        const returnObj:IReturnObj = {}
+        const filter:FilterQuery<ReservationsDocument>={
+            id,
+        };
+        if (resv.teamId) filter.teamId = resv.teamId;
+        if (resv.memberId) filter.memberId = resv.memberId
+        // if (!teamId) {
+        //     filter.memberId = user.id;
+        // } else {
+        //     filter.teamId = teamId;
+        // }
+        const found = await this.modelReserve.findOne(filter, 'id data status');
+        if (found) {
+            const tsids = found.data.map((v) => v);
+            const session = await this.connection.startSession();
+            session.startTransaction();
+            const updrs = await this.modelRS.updateMany({_id: {$in: tsids}}, {status: resv.status}, {session});
+            console.log('updrs:', updrs);
+            if (updrs.acknowledged) {
+                const act = resv.status === ReserveStatus.CANCELLED ? ActionOp.CANCELED : ActionOp.MODIFY;
+                const his = this.createHistory(user, act);
+                his.description = `${his.description} status: ${found.status} -> ${resv.reason} 原由:${resv.reason}`;
+                const upd = await this.modelReserve.updateOne(filter, {
+                    status: resv.status,
+                    $push: { history: his },
+                });
+                console.log('upd:', upd);
+                if (upd.acknowledged) {
+                    returnObj.data = id;
+                    await session.commitTransaction();
+                }
+            }
+            await session.endSession();
+        } else {
+            returnObj.error = ErrCode.RESERVATION_NOT_FOUND;
+        }
+        return returnObj;
+    }    
+    private async cancel_back_from_member_side(id:string, user:Partial<IUser | IMember>, teamId: string):Promise<IReturnObj>{
         const returnObj:IReturnObj = {}
         const filter:FilterQuery<ReservationsDocument>={
             id,
@@ -210,6 +346,47 @@ export class ReserveOp {
         }
         return returnObj;
     }
+    async cancel(id:string, user:Partial<IUser | IMember>, teamId: string=''):Promise<IReturnObj>{
+        const resv = new ReservationStatusRequestDto();
+        resv.status = ReserveStatus.CANCELLED;
+        if (teamId) resv.teamId = teamId;
+        else {
+            if ((user as IMember).name) {
+                resv.memberId = user.id;
+            }
+        }
+        return this.modifyStatus(id, resv, user);
+    }
+    async getParticipants(id:string):Promise<IReturnObj> {
+        const returnObj:IReturnObj = {}
+        const rsv = await this.modelReserve
+            .findOne({id}, 'participants')
+            .populate({
+                path: 'participants',
+                select: 'registrationDate status',
+                populate: {
+                    path: 'member',
+                    select: 'id name phone membershipType',
+                }
+            }).exec();
+        if (rsv) {
+            returnObj.data = rsv.participants.map((par) => {
+                const member = par.member as Partial<IMember>;
+                const tmp:ParticipantData = {
+                    id: member.id,
+                    name: member.name,
+                    phone: member.phone,
+                    membershipType: member.membershipType,
+                    registrationDate: par.registrationDate,
+                    status: par.status,
+                };
+                return tmp;
+            })
+        } else {
+            returnObj.error = ErrCode.RESERVATION_NOT_FOUND;
+        }
+        return returnObj;
+    }    
     async timeSectionCheck(datas:Partial<IReserveSection>[], revId:string = '') {
         console.log('timeSectionCheck', typeof datas, datas);
         const dfF:FilterQuery<ReserveSectionDocument> = {};

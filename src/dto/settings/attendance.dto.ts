@@ -6,7 +6,7 @@ export class AttendanceDto implements IAttendance {
     @ApiProperty({
         description: '準時獎勵分數',
         required: false,
-        example: '10'
+        example: '10',
     })
     @IsOptional()
     @IsString()
@@ -15,7 +15,7 @@ export class AttendanceDto implements IAttendance {
     @ApiProperty({
         description: '遲到懲罰分數',
         required: false,
-        example: '-10'
+        example: '-10',
     })
     @IsOptional()
     @IsString()
@@ -24,7 +24,7 @@ export class AttendanceDto implements IAttendance {
     @ApiProperty({
         description: '取消預約懲罰分數',
         required: false,
-        example: '-15'
+        example: '-15',
     })
     @IsOptional()
     @IsString()
@@ -33,7 +33,7 @@ export class AttendanceDto implements IAttendance {
     @ApiProperty({
         description: '未出席懲罰分數',
         required: false,
-        example: '-20'
+        example: '-20',
     })
     @IsOptional()
     @IsString()

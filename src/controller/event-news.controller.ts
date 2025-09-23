@@ -1,11 +1,12 @@
 import { Body, Controller, Delete, Get, HttpStatus, Injectable, Param, Post, Put, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiPreconditionFailedResponse, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { TokenGuard } from '../utils/tokens/token-guard';
 import { EventNewsService } from '../service/event-news.service';
 import { EventNewsListRes } from '../dto/eventnews/event-news-list-response';
 import { EventNewsRes } from '../dto/eventnews/event-news-response';
 import { EventNewsQueryRequest } from '../dto/eventnews/event-news-query-request.dto';
+import { AddTraceIdToResponse } from '../utils/constant';
 
 @Controller('event-news')
 @ApiTags('event-news')
@@ -29,6 +30,7 @@ export class EventNewsController {
         @Res() res:Response,
     ){
         const rlt = await this.enService.list(query);
+        AddTraceIdToResponse(rlt, req);
         return res.status(HttpStatus.OK).json(rlt);
     }
 
@@ -44,9 +46,11 @@ export class EventNewsController {
     @Get(':id')
     async getEventNewsDetail(
         @Param('id') id:string,
+        @Req() req:Request,
         @Res() res:Response,
     ){
         const rlt = await this.enService.findOne(id);
+        AddTraceIdToResponse(rlt, req);
         return res.status(HttpStatus.OK).json(rlt);
     }
 }

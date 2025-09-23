@@ -7,7 +7,7 @@ import { ANNOUNCEMENT_GROUP, DS_LEVEL } from '../utils/enum';
 import { THREE_MONTH } from '../utils/constant';
 import { AnnouncementsResponseDto } from '../dto/announcements/announcements-response.dto';
 import { ErrCode } from '../utils/enumError';
-import { Member, MemberDcoument } from '../dto/schemas/member.schema';
+import { Member, MemberDocument } from '../dto/schemas/member.schema';
 import { IAnnouncement } from '../dto/interface/announcement.if';
 import { DateLocale } from '../classes/common/date-locale';
 
@@ -16,7 +16,7 @@ export class AnnouncementsService {
     private myDate = new DateLocale();
     constructor(
         @InjectModel(Announcement.name) private readonly modelAnnounce:Model<AnnouncementDocument>,
-        @InjectModel(Member.name) private readonly modelMember:Model<MemberDcoument>,
+        @InjectModel(Member.name) private readonly modelMember:Model<MemberDocument>,
     ) {}
 
     async getAnnounce(user:Partial<IMember>|undefined = undefined):Promise<AnnouncementsResponseDto> {
@@ -31,24 +31,24 @@ export class AnnouncementsService {
         }
         try {
             const ans = await this.modelAnnounce.find(filter, "id title content type publishDate isTop iconType attachments");
-            // console.log('ans:', ans);
+            console.log('ans:', ans);
             if (ans) {
                 console.log('check1');
                 const rlt = (ans as Partial<IAnnouncement[]>).map((itm) => {
-            if (itm.attachments) {
-              itm.attachments = itm.attachments.map((att) => {
-                if (typeof att === 'string') {
-                  if (`${att}`.indexOf('"') !== -1) {
-                    att = JSON.parse(att);
-                    console.log('att:', att);
-                  }
-                }
-                return att;
-              });
-            }
-            return itm;
-          });
-
+                    if (itm.attachments) {
+                        itm.attachments = itm.attachments.map((att) => {
+                            if (typeof att === 'string') {
+                                if (`${att}`.indexOf('"') !== -1) {
+                                    att = JSON.parse(att);
+                                    console.log('att:', att);
+                                }
+                            }
+                            return att;
+                        });
+                    }
+                    return itm;
+                });
+                console.log('rlt:', rlt);
                 annRes.data = rlt
             }
         } catch  (e) {
@@ -73,7 +73,7 @@ export class AnnouncementsService {
                     {targetGroups: { $elemMatch: { id: user.id}}}
                 ],
             }
-            if (user.isDirector !== DS_LEVEL.NONE) {
+            if (user.isDirector) {
                 filter.$or.push({targetGroups: { $elemMatch: { $eq: ANNOUNCEMENT_GROUP.DIRECTOR_SUPERVISOR }}})
             }            
 

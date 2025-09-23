@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Scope } from '@nestjs/common';
 import { Request } from 'express';
 import { AuthRequestDto } from '../dto/auth/auth-request.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Member, MemberDcoument } from '../dto/schemas/member.schema';
+import { Member, MemberDocument } from '../dto/schemas/member.schema';
 import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { MEMBER_DEFAULT_FIELDS } from '../utils/base-fields-for-searh';
@@ -38,7 +38,7 @@ import { DateLocale } from '../classes/common/date-locale';
 export class AuthService {
   private myDate = new DateLocale();
   constructor(
-    @InjectModel(Member.name) private readonly modelMember:Model<MemberDcoument>,
+    @InjectModel(Member.name) private readonly modelMember:Model<MemberDocument>,
     @InjectModel(TempData.name) private readonly modelTempData:Model<TempDataDocument>,
     @InjectModel(LoginToken.name) private readonly modelLoginToken:Model<LoginTokenDocument>,
     @InjectModel(MemberActivity.name) private readonly modelMA:Model<MemberActivityDocument>,
@@ -185,11 +185,12 @@ export class AuthService {
   }
 
   async memberCreate(
-    memberCreate:MemberRegisterRequestDto, 
+    memberCreate:MemberRegisterRequestDto,
     file:Express.Multer.File | undefined = undefined,
   ):Promise<CommonResponseDto> {
     const comRes = new CommonResponseDto();
     try {
+      console.log('memberCreate:', memberCreate);
       const f = await this.modelTempData.findOne({code: memberCreate.phone});
       if (f) {
         const verificationCode = memberCreate.verificationCode;
@@ -406,6 +407,7 @@ export class AuthService {
       const mbr = await this.modelMember.findOne({id:user.id}, MEMBER_DEFAULT_FIELDS);
       if (mbr) {
         const mbrInfo:Partial<IMember> = {
+          _id: mbr._id,
           id: mbr.id,
           name: mbr.name,
           displayName: mbr.displayName,

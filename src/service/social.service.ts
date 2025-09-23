@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { FriendOp } from '../classes/social/friend-op';
 import { Friend, FriendDocument } from '../dto/schemas/friend.schema';
-import { Member, MemberDcoument } from '../dto/schemas/member.schema';
+import { Member, MemberDocument } from '../dto/schemas/member.schema';
 import { FuncWithTryCatchNew } from '../classes/common/func.def';
 import { IMember } from '../dto/interface/member.if';
 
@@ -12,7 +12,7 @@ import { IMember } from '../dto/interface/member.if';
 export class SocialService {
     private friendOp:FriendOp;
     constructor(
-        @InjectModel(Member.name) private readonly modelMbr:Model<MemberDcoument>,
+        @InjectModel(Member.name) private readonly modelMbr:Model<MemberDocument>,
         @InjectModel(Friend.name) private readonly modelFrd:Model<FriendDocument>,
     ){
         this.friendOp = new FriendOp(modelMbr, modelFrd);

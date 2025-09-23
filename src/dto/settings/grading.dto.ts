@@ -16,7 +16,7 @@ export class GradingDto implements IGrading {
     @ApiProperty({
         description: '正確球員獎勵分數',
         required: false,
-        example: '5'
+        example: '5',
     })
     @IsOptional()
     @IsString()

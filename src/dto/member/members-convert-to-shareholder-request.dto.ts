@@ -5,7 +5,7 @@ import { MEMBER_LEVEL } from '../../utils/enum';
 
 export class MembersConvertToShareholderRequestDto implements Partial<IMember> {
   @ApiProperty({
-    description: '會員代號'
+    description: '會員代號',
   })
   @IsString()
   id?: string;

@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, HttpStatus, Param, Post, Put, Query, Req
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommonResponseDto } from '../dto/common/common-response.dto';
 import TeamCreateRequestDto from '../dto/teams/team-create-request.dto';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { TeamDetailResponse } from '../dto/teams/team-detail-response';
 import { TeamUpdateRequestDto } from '../dto/teams/team-update-request.dto';
 import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
@@ -22,6 +22,7 @@ import { TeamAnnouncementCreateDto } from '../dto/announcements/team-announcemen
 import { TeamAnnouncementModifyDto } from '../dto/announcements/team-announcement-modify.dto';
 import { TeamAcceptReqDto } from '../dto/teams/accept-request.dto';
 import { TeamDenyReqDto } from '../dto/teams/deny-request.dto';
+import { AddTraceIdToResponse } from '../utils/constant';
 
 @Controller('teams')
 @ApiTags('teams')
@@ -40,8 +41,13 @@ export class TeamsController {
     })
     @ApiQuery({name: 'search', description: '球隊名稱關鍵字查詢', required:false})
     @Get()
-    async getTeams(@Query('search') search: string, @Res() res: Response) {
+    async getTeams(
+        @Query('search') search: string,
+        @Req() req: Request,
+        @Res() res: Response
+    ) {
         const result = await this.teamsService.getTeams(search);
+        AddTraceIdToResponse(result, req);
         return res.status(HttpStatus.OK).json(result);
     }
 
@@ -59,6 +65,7 @@ export class TeamsController {
         @Res() res: Response
     ) {
         const result = await this.teamsService.getMyTeams(req.user);
+        AddTraceIdToResponse(result, req);
         return res.status(HttpStatus.OK).json(result);
     }
 
@@ -81,6 +88,7 @@ export class TeamsController {
     ) {
         // Logic to create a team will go here
         const result = await this.teamsService.createTeam(teamInfo, file, req.user);
+        AddTraceIdToResponse(result, req);
         return res.status(HttpStatus.OK).json(result);
     }
 
@@ -93,9 +101,14 @@ export class TeamsController {
         type: TeamDetailResponse,
     })
     @Get(':id')
-    async getTeamDetail(@Param('id') teamId: string, @Res() res: Response) {
+    async getTeamDetail(
+        @Param('id') teamId: string,
+        @Req() req: Request,
+        @Res() res: Response
+    ) {
         // Logic to get team details will go here
         const result = await this.teamsService.getTeamDetail(teamId);
+        AddTraceIdToResponse(result, req);
         return res.status(HttpStatus.OK).json(result);
     }
 
@@ -114,10 +127,12 @@ export class TeamsController {
         @Param('id') teamId: string, 
         @Body(FormDataPipe) teamInfo: TeamUpdateRequestDto,
         @UploadedFile() file:Express.Multer.File,
+        @Req() req: Request,
         @Res() res: Response
     ) {
         // Logic to update a team will go here
         const result = await this.teamsService.updateTeam(teamId, teamInfo, file);
+        AddTraceIdToResponse(result, req);
         return res.status(HttpStatus.OK).json(result);
     }
 
@@ -140,8 +155,11 @@ export class TeamsController {
         @Param('id') teamId: string,
         @Body(FileNamePipe) fileUploadDto: FileUploadDto,
         @UploadedFile() file: Express.Multer.File,
-        @Res() res: Response) {
+        @Req() req: Request,
+        @Res() res: Response
+    ) {
         const result = await this.teamsService.uploadTeamLogo(teamId, file);
+        AddTraceIdToResponse(result, req);
         return res.status(HttpStatus.OK).json(result);
     }
 
@@ -162,6 +180,7 @@ export class TeamsController {
         @Res() res: Response) {
         // Logic to add a team member will go here
         const result = await this.teamsService.joinTeamMember(teamId, req.user);
+        AddTraceIdToResponse(result, req);
         return res.status(HttpStatus.OK).json(result);
     }
 
@@ -178,9 +197,12 @@ export class TeamsController {
     async updateTeamMember(
         @Body() memberInfo: TeamMemberUpdateRequestDto,
         @Param('id') teamId: string,
-        @Res() res: Response) {
-            const result = await this.teamsService.updateTeamMember(teamId, memberInfo);
-            return res.status(HttpStatus.OK).json(result);
+        @Req() req: Request,
+        @Res() res: Response
+    ) {
+        const result = await this.teamsService.updateTeamMember(teamId, memberInfo);
+        AddTraceIdToResponse(result, req);
+        return res.status(HttpStatus.OK).json(result);
     }
 
     @ApiOperation({
@@ -199,6 +221,7 @@ export class TeamsController {
         @Res() res: Response
     ){
         const result = await this.teamsService.leaveTeam(teamId, req.user);
+        AddTraceIdToResponse(result, req);
         return res.status(HttpStatus.OK).json(result);
     }
 
@@ -221,6 +244,7 @@ export class TeamsController {
         @Res() res: Response,
     ){
         const result = await this.teamsService.acceptMember(teamId, memberId, req.user);
+        AddTraceIdToResponse(result, req);
         return res.status(HttpStatus.OK).json(result);
     }
 
@@ -243,6 +267,7 @@ export class TeamsController {
         @Res() res: Response,
     ){
         const result = await this.teamsService.denyMember(teamId, memberId, req.user, notes);
+        AddTraceIdToResponse(result, req);
         return res.status(HttpStatus.OK).json(result);
     }    
     // @ApiOperation({
@@ -281,6 +306,7 @@ export class TeamsController {
         @Res() res:Response,
     ){
         const result = await this.teamsService.createTeamActivity(teamId, taCreate, req.user);
+        AddTraceIdToResponse(result, req);
         return res.status(HttpStatus.OK).json(result);
     }
 
@@ -303,6 +329,7 @@ export class TeamsController {
         @Res() res:Response,
     ) {
         const result = await this.teamsService.modifyTeamActivity(teamId, actId, modifyAct, req.user);
+        AddTraceIdToResponse(result, req);
         return res.status(HttpStatus.OK).json(result);
     }
 
@@ -319,9 +346,11 @@ export class TeamsController {
     async getActivities(
         @Param('id') teamId: string,
         @Query() dates:DateRangeQueryReqDto,
+        @Req() req:Request,
         @Res() res:Response,
     ){
         const result = await this.teamsService.getActivities(teamId, dates);
+        AddTraceIdToResponse(result, req);
         return res.status(HttpStatus.OK).json(result);
     }
 
@@ -337,9 +366,11 @@ export class TeamsController {
     @Get('activities/last/:id')
     async getActivitiesLastThreeMonths(
         @Param('id') teamId: string,
+        @Req() req:Request,
         @Res() res:Response,
     ){
         const result = await this.teamsService.getActivitiesLastThreeMonths(teamId);
+        AddTraceIdToResponse(result, req);
         return res.status(HttpStatus.OK).json(result);
     }
 
@@ -355,9 +386,11 @@ export class TeamsController {
     @Get('activities/participants/:activityId')
     async getActivityParticipants(
         @Param('activityId') activityId: string,
+        @Req() req:Request,
         @Res() res:Response,
     ){
         const result = await this.teamsService.getActivityParticipants(activityId);
+        AddTraceIdToResponse(result, req);
         return res.status(HttpStatus.OK).json(result);
     }
 
@@ -379,6 +412,7 @@ export class TeamsController {
         @Res() res:Response,
     ){
         const result = await this.teamsService.joinActivity(teamId, activityId, req.user);
+        AddTraceIdToResponse(result, req);
         return res.status(HttpStatus.OK).json(result);
     }
 
@@ -400,6 +434,7 @@ export class TeamsController {
         @Res() res:Response,
     ){
         const result = await this.teamsService.leaveActivity(teamId, activityId, req.user);
+        AddTraceIdToResponse(result, req);
         return res.status(HttpStatus.OK).json(result);
     } 
     @ApiOperation({
@@ -418,6 +453,7 @@ export class TeamsController {
         @Res() res: Response,
     ) {
         const annRes = await this.teamsService.announcementsGet(teamId);
+        AddTraceIdToResponse(annRes, req);
         return res.status(HttpStatus.OK).json(annRes);
     }
     @ApiOperation({
@@ -449,6 +485,7 @@ export class TeamsController {
             announcementCreateDto,
             files,
         );
+        AddTraceIdToResponse(comRes, req);
         return res.status(HttpStatus.OK).json(comRes);
     }
 
@@ -480,6 +517,7 @@ export class TeamsController {
             announceUpdateDto,
             files,
         );
+        AddTraceIdToResponse(comRes, req);
         return res.status(HttpStatus.OK).json(comRes);
     }
 
@@ -497,12 +535,14 @@ export class TeamsController {
     async announcementsDel(
         @Param('id') teamId: string,
         @Param('annId') annId: string,
+        @Req() req:Request,
         @Res() res: Response,
     ) {
         const comRes = await this.teamsService.announcementsDel(
             teamId,
             annId,
         );
+        AddTraceIdToResponse(comRes, req);
         return res.status(HttpStatus.OK).json(comRes);
     }
     @Delete('teammember/reformdata')

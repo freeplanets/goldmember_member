@@ -25,7 +25,7 @@ export class CouponsTransferOneDto {
   @ApiProperty({
     description: '受贈者手機號碼',
     required: false,
-    example: '0912345678'
+    example: '0912345678',
   })
   @IsOptional()
   @IsString()

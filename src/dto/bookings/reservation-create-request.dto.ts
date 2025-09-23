@@ -44,7 +44,7 @@ export class ReservationCreateRequestDto implements Partial<IReservations> {
     contactPhone?: string;
 
     @ApiProperty({
-        description: '參與人數 (個人預約時使用)'
+        description: '參與人數 (個人預約時使用)',
     })
     @IsOptional()
     @IsNumber()

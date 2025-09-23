@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IReservations, IReserveSection } from "../interface/reservations.if";
+import { IReservationParticipant, IReservations, IReserveSection } from "../interface/reservations.if";
 import { IsArray, IsNumber, IsObject, IsOptional, IsString } from "class-validator";
 import { ReserveSectionDto } from "./reserve-section.dto";
 
@@ -40,7 +40,8 @@ export class TeamReserveReqDto implements Partial<IReservations> {
         description: '參與人員名單',
         required: false,
     })
-    participants:any;    //參與人員名單 (個人預約時使用)
+    participants?: string | IReservationParticipant[];
+    //participants:any;    //參與人員名單 (個人預約時使用)
 
     @ApiProperty({
         description: '組數',

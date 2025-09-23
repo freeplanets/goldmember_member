@@ -91,3 +91,5 @@ export interface IOrganization {
     type: ORGANIZATION_TYPE;
     name?: string;
 }
+
+// 公告 天氣 賽事 果嶺速度

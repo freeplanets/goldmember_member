@@ -5,8 +5,8 @@
  */
 
 import axios, { AxiosRequestConfig,  } from "axios";
-import { GEO_INFO, WEATHER_ELEMENT } from "./weather-enum";
-import { IParamsOfWeather, IWeatherCommonResponse, IWeatherResponse, IWeekWeatherResponse } from "./weather-if";
+import { GEO_INFO } from "./weather-enum";
+import { IParamsOfWeather, IWeatherCommonResponse } from "./weather-if";
 
 export class WeatherInfo {
     private url = 'https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001';

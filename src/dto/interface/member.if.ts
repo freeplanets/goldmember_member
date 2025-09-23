@@ -1,6 +1,7 @@
-import { DS_LEVEL, GENDER, MEMBER_LEVEL } from "../../utils/enum";
-import { ILoginDevice } from "./devices.if";
-import { IModifiedBy } from "./modifyed-by.if";
+import { DS_LEVEL, GENDER, MEMBER_LEVEL } from '../../utils/enum';
+import { ILoginDevice } from './devices.if';
+import { IModifiedBy } from './modifyed-by.if';
+import { ICreditRecord } from './team-group.if';
 
 export interface IMember {
   id?: string;
@@ -27,7 +28,7 @@ export interface IMember {
   notes?: string;
   lastLogin?: number;
   lastLoginIp: string; 
-  isDirector?: DS_LEVEL;       // 球場董監事
+  isDirector?: boolean; //DS_LEVEL;       // 球場董監事
   refSystemId?: string;  //非股東會員董監代表之股東代號
   directorStatusLastModified?: IModifiedBy;
   isLocked?: boolean; // 是否鎖定
@@ -36,7 +37,18 @@ export interface IMember {
   announcementReadTs?: number; // 公告已讀時間戳
   devices: Partial<ILoginDevice>[]; //會員登入設備
   isCouponTriggered: boolean; // 因轉送優惠券而產生的會員
+  creditScore: number;    //信用評分
+  creditHistory?: ICreditRecord[];
+  NotifyOptions: INotificationOptions;
   _id?:string;
+}
+
+export interface INotificationOptions {
+  announcements: boolean;
+  bookingReminders: boolean;
+  teamInvites: boolean;
+  systemNotifications: boolean;
+  couponNotifications: boolean;
 }
 
 export interface IMemberActivity {
@@ -65,6 +77,16 @@ export interface IMemberTransferLog extends IModifiedBy {
   oldMembershipType?: MEMBER_LEVEL;
   newMembershipType?: MEMBER_LEVEL;
   isDirector?: boolean;
+}
+
+export interface IPushToken {
+    //id: string;
+    userId: string; 
+    expoPushToken: string; 
+    nativePushToken: string; 
+    platform: string; 
+    deviceId: string;
+    updateAt?: string;
 }
 // 非app股東，查詢優惠券
 

@@ -4,7 +4,7 @@ import { COUPON_STATUS } from "../../utils/enum";
 import { IModifiedBy } from "../interface/modifyed-by.if";
 import { Document } from "mongoose";
 import { ModifiedByData } from "../data/modified-by.data";
-import { CouponTransferLog } from "./coupon-transfer-log.schema";
+// import { ModifyBySchema } from "./modify-by.schema";
 
 export type CouponDocument = Document & Coupon;
 
@@ -56,6 +56,9 @@ export class Coupon implements ICoupon {
     toPaperNo: string;
 
     @Prop()
+    toPaperTS: number;
+
+    @Prop()
     notAppMember?: boolean;
 
     @Prop({
@@ -69,10 +72,11 @@ export class Coupon implements ICoupon {
     collector: IModifiedBy;
 
     @Prop({
-        type: Array<CouponTransferLog>,
+        type: Array<Object>,
         default: [],
     })
     logs: Partial<ICouponTransferLog>[];
+
 }
 
 export const CouponSchema = SchemaFactory.createForClass(Coupon);

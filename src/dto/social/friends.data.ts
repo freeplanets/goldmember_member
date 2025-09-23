@@ -4,7 +4,7 @@ import { FriendMemberInfo } from './friend-memberInfo.data';
 
 export class FriendData implements Partial<IFriend> {
     @ApiProperty({
-        description: '會員名稱'
+        description: '會員名稱',
     })
     nickname?: string;
 
@@ -14,7 +14,8 @@ export class FriendData implements Partial<IFriend> {
     })
     memberInfo?: any;
     @ApiProperty({
-        description: '交友時間戳'
+        description: '交友時間戳',
+        type: Number,
     })
     occurTS?: number;
 }

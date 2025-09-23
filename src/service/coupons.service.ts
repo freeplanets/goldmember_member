@@ -6,7 +6,7 @@ import { IMember } from '../dto/interface/member.if';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Coupon, CouponDocument } from '../dto/schemas/coupon.schema';
 import mongoose, { FilterQuery, Model, UpdateQuery } from 'mongoose';
-import { Member, MemberDcoument } from '../dto/schemas/member.schema';
+import { Member, MemberDocument } from '../dto/schemas/member.schema';
 import { CouponsResponseDto } from '../dto/coupon/coupons-response.dto';
 import { DtoErrMsg, ErrCode } from '../utils/enumError';
 import { CommonResponseDto } from '../dto/common/common-response.dto';
@@ -29,7 +29,7 @@ export class CouponsService {
   private msgOp:MessageOp;
   constructor(
     @InjectModel(Coupon.name) private readonly modelCoupon:Model<CouponDocument>,
-    @InjectModel(Member.name) private readonly modelMember:Model<MemberDcoument>,
+    @InjectModel(Member.name) private readonly modelMember:Model<MemberDocument>,
     @InjectModel(CouponTransferLog.name) private readonly modelCTL:Model<CouponTransferLogDocument>,
     @InjectModel(Announcement.name) private readonly modelAnn:Model<AnnouncementDocument>,
     @InjectConnection() private readonly connection:mongoose.Connection,
@@ -87,7 +87,7 @@ export class CouponsService {
         comRes.error.extra = DtoErrMsg.ID_OR_PHONE_AT_LEAST;
         return comRes;
       }
-      const filter:FilterQuery<MemberDcoument> = {};
+      const filter:FilterQuery<MemberDocument> = {};
       if (ctfrd.targetPhone) {
         filter.phone = ctfrd.targetPhone;
       } else {

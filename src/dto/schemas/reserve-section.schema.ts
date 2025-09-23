@@ -9,13 +9,13 @@ export type ReserveSectionDocument = Document & ReserveSection;
 export class ReserveSection implements IReserveSection {
     @Prop({index:true, unique: true})
     id: string;
-   
+
     @Prop()
     reservationId: string;
 
     @Prop({index:true})
     refId: string;
-    
+
     @Prop({index: true})
     date:string;    //($date)日期 (YYYY/MM/DD)
 
@@ -37,8 +37,11 @@ export class ReserveSection implements IReserveSection {
     @Prop({index: true})
     type:TimeSectionType;    //時段類型 (單一時段或時間範圍) Enum:[ timeslot, range ]
 
-    @Prop()
+    @Prop({})
     status: ReserveStatus;
+
+    @Prop()
+    appointment: string;
 }
 
 export const ReserveSectionSchema = SchemaFactory.createForClass(ReserveSection);

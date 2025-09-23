@@ -6,7 +6,6 @@ export class CouponAcceptRequestDto {
     @ApiProperty({
         description: '優惠券代號',
         required: true,
-        type:String,
         isArray: true,
     })
     @Matches(UUID_V4_STYLE, {each: true})

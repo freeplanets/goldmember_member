@@ -11,11 +11,20 @@ import { SettingsResponse } from '../dto/settings/settings.response';
 import { SystemParamCheck } from '../utils/common';
 import { TimeslotsResponse } from '../dto/settings/timeslots-response';
 import { ITimeslots, ITimeslotsValue } from '../utils/settings/settings.if';
+import { FuncWithTryCatchNew } from '../classes/common/func.def';
+import { Holidays } from '../classes/holidays/holidays';
+import { Holiday, HolidayDocument } from '../dto/schemas/holiday.schema';
 
 
 @Injectable()
 export class SystemParameterService {
-    constructor(@InjectModel(SystemParameter.name) private readonly modelSP:Model<SystemParameterDocument>){}
+    private hdyDb:Holidays;
+    constructor(
+        @InjectModel(SystemParameter.name) private readonly modelSP:Model<SystemParameterDocument>,
+        @InjectModel(Holiday.name) private readonly modelHoliday:Model<HolidayDocument>,
+    ){
+        this.hdyDb = new Holidays(modelHoliday);
+    }
     async init(){
         const comRes:ICommonResponse<any> = new CommonResponseDto();
         //const key:ParamTypes = ParamTypes.APP_SETTINGS;
@@ -40,11 +49,11 @@ export class SystemParameterService {
         }
         return comRes;
     }
-    async getParameters(id?:ParamTypes | string):Promise<SettingsResponse>{
+    async getParameters(ids?:ParamTypes | string):Promise<SettingsResponse>{
         const comRes = new SettingsResponse();
         try {
             const filter:FilterQuery<SystemParameterDocument> = {}
-            if (id && id !== '{id}') filter.id = id;
+            if (ids) filter.id = {$in: ids.split(',')};
             console.log('filter:', filter);
             const ans = await this.modelSP.find(filter);
             if (ans) {
@@ -118,4 +127,7 @@ export class SystemParameterService {
         }
         return comRes;
     }
+    async getHolidays(year:number, month:number = 0) {
+        return FuncWithTryCatchNew(this.hdyDb, 'list', year, month);
+    }    
 }

@@ -1,14 +1,16 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { IMember } from "../interface/member.if";
-import { Document } from "mongoose";
-import { DS_LEVEL, GENDER, MEMBER_LEVEL } from "../../utils/enum";
-import { ModifiedByData } from "../data/modified-by.data";
-import * as bcrypt from "bcryptjs";
-import { IModifiedBy } from "../interface/modifyed-by.if";
-import { LoginDevice } from "../devices/login-device";
-import { ILoginDevice } from "../interface/devices.if";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { IMember, INotificationOptions } from '../interface/member.if';
+import { ModifiedByData } from '../data/modified-by.data';
+import * as bcrypt from 'bcryptjs';
+import mongoose, { Document } from 'mongoose';
+import { GENDER, MEMBER_LEVEL } from '../../utils/enum';
+import { IModifiedBy } from '../interface/modifyed-by.if';
+import { ILoginDevice } from '../interface/devices.if';
+import { LoginDevice } from '../devices/login-device';
+import { ICreditRecord } from '../interface/team-group.if';
+import { NotificationOptionsSchema } from './notification-options.schema';
 
-export type MemberDcoument = Document & Member;
+export type MemberDocument = Document & Member;
 
 @Schema()
 export class Member implements IMember {
@@ -46,7 +48,7 @@ export class Member implements IMember {
     @Prop()
     email: string;
 
-    @Prop({index: true, unique: true, required: true})
+    @Prop()
     phone: string;
 
     @Prop()
@@ -85,16 +87,13 @@ export class Member implements IMember {
     notes: string;
 
     @Prop()
-    lastLogin?: number;
-
+    lastLogin: number;
+    
     @Prop()
     lastLoginIp: string;
-    
-    @Prop({
-        enum: DS_LEVEL,
-        default: DS_LEVEL.NONE,
-    })
-    isDirector: DS_LEVEL;
+
+    @Prop({ default: false })
+    isDirector: boolean;
     
     @Prop()
     refSystemId: string;
@@ -118,12 +117,12 @@ export class Member implements IMember {
         default: 0,
     })
     passwordLastTryTs: number;
-
+    
     @Prop({
         default: 0,
     })
     announcementReadTs?: number;
-
+    
     @Prop({
         type:Array<Partial<LoginDevice>>
     })
@@ -131,10 +130,29 @@ export class Member implements IMember {
 
     @Prop()
     isCouponTriggered: boolean;
+
+    @Prop({
+        default: 100,
+    })
+    creditScore: number;    //信用評分
+
+    @Prop({
+        type: [{ 
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: 'CreditRecord' 
+        }],
+        default: [],
+    })
+    creditHistory?: ICreditRecord[];
+
+    @Prop({
+        type: NotificationOptionsSchema,
+    })
+    NotifyOptions: INotificationOptions;
 }
 const saltRounds = Number(process.env.SALT_ROUNDS);
 export const MemberSchema = SchemaFactory.createForClass(Member);
-MemberSchema.pre("save", async function name(next:Function) {
+MemberSchema.pre('save', async function name(next:Function) {
     if (!this.isModified('password')) return next();
     try {
         const salt = await bcrypt.genSalt(saltRounds);
@@ -144,27 +162,27 @@ MemberSchema.pre("save", async function name(next:Function) {
         return next(err);
     }
 });
-MemberSchema.pre("findOneAndUpdate", async function name(next:Function) {
+MemberSchema.pre('findOneAndUpdate', async function name(next:Function) {
     const upd = this.getUpdate() as Partial<IMember>;
-    // console.log("pre findOneAndUpdate", this.getUpdate());
+    // console.log('pre findOneAndUpdate', this.getUpdate());
     if (upd.password) {
         const salt = await bcrypt.genSalt(saltRounds);
         upd.password = await bcrypt.hash(upd.password, salt);
         //this.setUpdate(upd);
     }
-    // console.log("pre findOneAndUpdate", this.getUpdate());
+    // console.log('pre findOneAndUpdate', this.getUpdate());
     return next();
 })
-MemberSchema.pre("updateOne", async function name(next:Function) {
-    //console.log("updateOne start");
+MemberSchema.pre('updateOne', async function name(next:Function) {
+    //console.log('updateOne start');
     const upd = this.getUpdate() as Partial<IMember>;
-    //console.log("pre UpdateOne", upd);
+    //console.log('pre UpdateOne', upd);
     if (upd.password) {
         const salt = await bcrypt.genSalt(saltRounds);
         upd.password = await bcrypt.hash(upd.password, salt);
         //this.setUpdate(upd);
     }
-    //console.log("pre UpdateOne end");
+    //console.log('pre UpdateOne end');
     return next();    
 })
 MemberSchema.methods.comparePassword = async function(candidatePassword:string, salt:string) {

@@ -13,8 +13,11 @@ export default registerAs('mongo', () => {
         port =process.env.LMONGO_PORT;
         rpSet = process.env.LMONGO_REPLICA_SET;        
     }
+    const hosts = resource.split(',').map((h) => `${h}:${port}`).join(',')
     const encodePassword = encodeURIComponent(password);
-    const uri = `mongodb://${username}:${encodePassword}@${resource}:${port}/?retryWrites=true&w=majority&replicaSet=${rpSet}`;
+    //const uri = `mongodb://${username}:${encodePassword}@${resource}:${port}/?retryWrites=true&w=majority&replicaSet=${rpSet}`;
+    const uri = `mongodb://${username}:${encodePassword}@${hosts}/?retryWrites=true&w=majority&replicaSet=${rpSet}&authSource=admin`;
+    //mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
     console.log(uri)
     return {username, password, resource, uri};
 });

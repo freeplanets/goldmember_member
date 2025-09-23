@@ -25,7 +25,7 @@ const ObjDataChk = (val:object) => {
 @Injectable()
 export class GlobalDataTransPipe implements PipeTransform {
     transform(value: any, metadata: ArgumentMetadata) {
-        // console.log('GlobalDataTransPipe:', value, metadata);
+        //console.log('GlobalDataTransPipe:', value, metadata);
         if (typeof value === 'string') {
             if (DATE_STYLE.test(value)) {
                 // value = value.replaceAll('-','/');
@@ -46,7 +46,7 @@ export class GlobalDataTransPipe implements PipeTransform {
             //     }
             // }
         }
-        // console.log('GlobalDataTransPipe after:', value);
+        //console.log('GlobalDataTransPipe after:', value);
         return value;
     }
 }

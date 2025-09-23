@@ -1,12 +1,16 @@
-import * as AWS from "aws-sdk";
-import { Readable } from "stream";
+import * as AWS from 'aws-sdk';
+import { Readable } from 'stream';
 import { v1 as uuidv1 } from 'uuid';
+// import { ImageVerify } from './images/images-verify';
+//import { needsBuffer } from './constant';
 
 export interface Upload2S3Response {
     fileUrl: string;
     OriginalFilename: string;
     filesize?: number;
 }
+
+
 
 export class Upload2S3 {
     private AWS_S3_BUCKET = 'images.uuss.net/linkougolf';
@@ -15,10 +19,13 @@ export class Upload2S3 {
     private newfilename:string;
     private filesize:number;
 
-    constructor(region: string = 'ap-southeast-1') {
+    constructor(region: string = 'ap-southeast-1', bucket='') {
         this.s3 = new AWS.S3({
             region,
         });
+        if (bucket) {
+            this.AWS_S3_BUCKET = bucket;
+        }
     }
     get file_url() {
         return `https://${this.AWS_S3_BUCKET}/${this.newfilename}`;
@@ -41,7 +48,17 @@ export class Upload2S3 {
      */
     async uploadFile(file:Express.Multer.File) {
         console.log('file:', file);
-        file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+        //if (needsBuffer(file.originalname)) {
+        if (!this.isChinese(file.originalname)) {
+            if (this.isEncodedURIComponent(file.originalname)) {
+                file.originalname = decodeURIComponent(file.originalname);
+            } else {
+                file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
+            }
+        } else {
+            console.log('no buffer need');
+        }
+        console.log('after buffer from:', file.originalname, file.mimetype);
         const { originalname } = file;
         this.filename = originalname;
         const ary = originalname.split('.');
@@ -69,8 +86,17 @@ export class Upload2S3 {
             const s3Response = await this.s3.upload(params).promise();
             return s3Response;
         } catch(err) {
-            console.log("S3 Upload Error:", err);
+            console.log('S3 Upload Error:', err);
             return false;
         }
-    }    
+    }
+    isChinese(str: string): boolean {
+        // 檢查是否包含中文
+        return /[\u4e00-\u9fff]/.test(str);
+    }
+
+    isEncodedURIComponent(str: string): boolean {
+        // 檢查是否包含 %XX（XX 為兩位十六進位數字）
+        return /%[0-9A-Fa-f]{2}/.test(str);
+    }        
 }

@@ -1,5 +1,28 @@
-import { COUPON_STATUS, COUPON_TYPES } from "../../utils/enum";
+import { BIRTH_OF_MONTH, COUPON_BATCH_ISSUANCE_METHOD, COUPON_BATCH_STATUS, COUPON_STATUS } from "../../utils/enum";
+import { IHasFilterItem } from "./common.if";
 import { IModifiedBy } from "./modifyed-by.if";
+
+export interface ICouponBatch extends IHasFilterItem {
+    id?: string;
+    name?: string;
+    description?: string;
+    birthMonth?: BIRTH_OF_MONTH,
+    mode?: string;
+    frequency?: string;
+    validityMonths?: number;
+    couponsPerPerson?: number;
+    issueMode?: COUPON_BATCH_ISSUANCE_METHOD; // 手動,  自動
+    numberOfIssued: number;     //總發行張收
+    numberOfIssuers: number;    //總發行人數
+    issueDate?: string;
+    expiryDate?: string;
+    status?: COUPON_BATCH_STATUS;
+    originId?: string;
+    couponCreated?: boolean;
+    creator: IModifiedBy;
+    authorizer: IModifiedBy;
+    updater: IModifiedBy;
+}
 
 export interface ICoupon {
     id?: string;
@@ -34,6 +57,20 @@ export interface ICouponTransferLog {
     transferDate: string;
     transferDateTS: number;
 }
+export interface ICouponAutoIssuedLog {
+    batchId: string;
+    name?: string;
+    type?: string;
+    issueDate?: string;
+    originBatchId?: string;
+    totalCoupons?: number;
+    numberOfIssued?: number;     //總發行張收
+    numberOfIssuers?: number;    //總發行人數
+    issueDateTs?: number;
+    authorizer?: IModifiedBy;
+    status?: COUPON_BATCH_STATUS; 
+}
+
 export interface IBirthDayCoupon {}     // 生日券
 export interface IShareholderCoupon {}  // 股東券
 export interface IDirectorSupervisorCoupon{} // 董監券

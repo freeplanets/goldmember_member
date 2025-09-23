@@ -1,12 +1,12 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { IAnnouncement, IAttachmemt } from "../interface/announcement.if";
-import { ANNOUNCEMENT_GROUP, MEMBER_EXTEND_GROUP, SEARCH_GROUP_METHOD } from "../../utils/enum";
+import { MEMBER_EXTEND_GROUP, MEMBER_GROUP } from "../../utils/enum";
 import { IModifiedBy } from "../interface/modifyed-by.if";
-import { Document } from "mongoose";
-import { Attachment } from "../announcements/attachment";
 import { ModifiedByData } from "../data/modified-by.data";
-import { OrganizationSchema } from "./organization.schema";
+import { Attachment } from "../announcements/attachment";
+import { Document } from "mongoose";
 import { IOrganization } from "../interface/common.if";
+import { OrganizationSchema } from "./organization.schema";
 
 export type AnnouncementDocument = Document & Announcement;
 
@@ -17,7 +17,7 @@ export class Announcement implements IAnnouncement {
 
     @Prop({
         index: true,
-        type: OrganizationSchema
+        type: OrganizationSchema,
     })
     organization: IOrganization;
 
@@ -48,25 +48,25 @@ export class Announcement implements IAnnouncement {
     iconType?: string;
 
     @Prop({
-        type: [Attachment],
+        type: Array<Attachment>,
     })
     attachments?: IAttachmemt[];
 
     @Prop({
         type: Array<String>,
-        enum: ANNOUNCEMENT_GROUP
+        enum: MEMBER_GROUP
     })
-    targetGroups: any[];
-
-    @Prop()
-    extendFilter?: MEMBER_EXTEND_GROUP[];
+    targetGroups: MEMBER_GROUP[];
 
     @Prop({
-        type: String,
-        enum: SEARCH_GROUP_METHOD,
+      enum: MEMBER_EXTEND_GROUP,
+      type: Array<MEMBER_EXTEND_GROUP>,  
     })
-    method?: SEARCH_GROUP_METHOD;
-
+    extendFilter?: MEMBER_EXTEND_GROUP[];
+    
+    @Prop()
+    birthMonth: number;
+    
     @Prop({
         type: ModifiedByData
     })
@@ -77,17 +77,14 @@ export class Announcement implements IAnnouncement {
     })    
     updater: IModifiedBy;
 
-    // @Prop({
-    //     default: true,
-    // })
-    // isApprev: boolean;
-    
     @Prop({
         type: ModifiedByData
     })
     authorizer: IModifiedBy;
 
-    @Prop()
+    @Prop({
+
+    })
     publishedTs: number;
 }
 

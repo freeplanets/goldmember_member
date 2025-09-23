@@ -10,7 +10,7 @@ export class MemberCreateRequestDto extends FileUploadDto implements Partial<IMe
   @ApiProperty({
     description: '會員名稱',
     required: true,
-    example: '王大明'
+    example: '王大明',
   })
   @IsString()
   name: string;
@@ -51,14 +51,14 @@ export class MemberCreateRequestDto extends FileUploadDto implements Partial<IMe
   @ApiProperty({
     description: '手機號碼',
     required: true,
-    example: '0912123456'
+    example: '0912123456',
   })
   phone: string;
 
   @ApiProperty({
     description: '生日',
     required: false,
-    example: '1934/01/01'
+    example: '1934/01/01',
   })
   @IsOptional()
   @IsString()
@@ -67,7 +67,7 @@ export class MemberCreateRequestDto extends FileUploadDto implements Partial<IMe
   @ApiProperty({
     description: '地址',
     required: false,
-    example: '新北市蘆洲區中山一路XX號'
+    example: '新北市蘆洲區中山一路XX號',
   })
   @IsOptional()
   @IsString()
@@ -76,7 +76,7 @@ export class MemberCreateRequestDto extends FileUploadDto implements Partial<IMe
   @ApiProperty({
     description: '差點',
     required: false,
-    example: 56
+    example: 56,
   })
   // @IsOptional()
   // @IsNumber()

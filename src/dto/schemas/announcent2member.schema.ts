@@ -37,6 +37,11 @@ export class Announcement2Member implements IAnnouncement2Member {
         default: false,
     })
     isDeleted: boolean;
+
+    @Prop({
+        default: false,
+    })
+    isPublished: boolean;
 }
 
 export const Announcement2MemberSchema = SchemaFactory.createForClass(Announcement2Member);

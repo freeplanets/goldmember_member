@@ -11,6 +11,7 @@ import { MemberGrowth, MemberGrowthSchema } from '../dto/schemas/member-growth.s
 import { MemberTransferLog, MemberTransferLogSchema } from '../dto/schemas/member-transfer-log.schema';
 import { Coupon, CouponSchema } from '../dto/schemas/coupon.schema';
 import { InvitationCode, InvitationCodeSchema } from '../dto/schemas/invitation-code.schema';
+import { PushToken, PushTokenSchema } from '../dto/schemas/push-token.schema';
 
 @Module({
   imports: [
@@ -24,7 +25,8 @@ import { InvitationCode, InvitationCodeSchema } from '../dto/schemas/invitation-
         {name:MemberGrowth.name, schema:MemberGrowthSchema},
         {name:MemberTransferLog.name, schema:MemberTransferLogSchema},
         {name:Coupon.name, schema: CouponSchema},
-        {name:InvitationCode.name, schema: InvitationCodeSchema}
+        {name:InvitationCode.name, schema: InvitationCodeSchema},
+        {name:PushToken.name, schema:PushTokenSchema},
       ],
     ),
   ],

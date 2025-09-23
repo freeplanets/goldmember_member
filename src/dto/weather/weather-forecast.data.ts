@@ -6,7 +6,7 @@ export class WeatherForecastData implements IForecast {
   @ApiProperty({
     description: '日期',
     required: false,
-    example: '2025-01-01'
+    example: '2025-01-01',
   })
   @IsOptional()
   @IsString()
@@ -33,7 +33,7 @@ export class WeatherForecastData implements IForecast {
   @ApiProperty({
     description: '最高温度',
     required: false,
-    example: 30.5
+    example: 30.5,
   })
   @IsOptional()
   @IsNumber()

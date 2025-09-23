@@ -7,7 +7,7 @@ export type asyncfunc = (...arp:any) => Promise<any>;
 export type tryfunc<T> = (f: asyncfunc, ...arp:any[]) => Promise<any>;
 
 export type asyncfuncReturnObj = (...arp:any) => Promise<IReturnObj>;
-export type funcReturnObj<T> = (obj: AnyObject, fn:string, ...arp:any[]) => Promise<any>;
+export type funcReturnObj<T> = (obj: AnyObject, fn:string, ...arp:any[]) => Promise<ICommonResponse<any>>;
 
 export const FuncWithTryCatch: tryfunc<any> = async (f: asyncfunc, ...arp:any) => {
     const comRes:ICommonResponse<any> = new CommonResponseDto()
@@ -27,7 +27,7 @@ export const FuncWithTryCatchNew: funcReturnObj<any> = async (obj: any, function
     const comRes:ICommonResponse<any> = new CommonResponseDto()
     try {
         const { data, error, extra }  = await obj[functionName](...arp);
-        console.log('data:', data, 'error:', error);
+        // console.log('data:', data, 'error:', error);
         if (error) {
             comRes.ErrorCode = error;
             if (extra) {

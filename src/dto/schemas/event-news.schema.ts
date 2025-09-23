@@ -1,9 +1,8 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IEventNews } from '../interface/event-news';
-import { IModifiedBy } from '../interface/modifyed-by.if';
-import { Document } from 'mongoose';
-import { ModifiedByData } from '../data/modified-by.data';
-// import { EventNewsType } from '../../utils/enum';
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { IEventNews } from "../interface/event-news";
+import { IModifiedBy } from "../interface/modifyed-by.if";
+import { Document } from "mongoose";
+import { ModifiedByData } from "../data/modified-by.data";
 
 export type EventNewsDocument = Document & EventNews;
 
@@ -14,9 +13,11 @@ export class EventNews implements IEventNews {
     })
     id: string;
 
-    @Prop({index:true})
+    @Prop({
+        index:true
+    })
     targetId: string;
-    
+
     @Prop()
     title: string;
 
@@ -52,8 +53,6 @@ export class EventNews implements IEventNews {
     })
     isDeleted: boolean;
 
-    // @Prop()
-    // type: EventNewsType;
 }
 
 export const EventNewsSchema = SchemaFactory.createForClass(EventNews);

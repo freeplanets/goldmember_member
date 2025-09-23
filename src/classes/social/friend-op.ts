@@ -1,14 +1,14 @@
 import { Model } from 'mongoose';
 import { IbulkWriteItem, IReturnObj } from '../../dto/interface/common.if';
 import { FriendDocument } from '../../dto/schemas/friend.schema';
-import { MemberDcoument } from '../../dto/schemas/member.schema';
+import { MemberDocument } from '../../dto/schemas/member.schema';
 import { ErrCode } from '../../utils/enumError';
 import {v1 as uuidv1} from 'uuid';
 import { IFriend } from '../../dto/interface/social.if';
 
 export class FriendOp {
     constructor(
-        private readonly modelMbr:Model<MemberDcoument>,
+        private readonly modelMbr:Model<MemberDocument>,
         private readonly modelFrd:Model<FriendDocument>,
     ) {}
     async making(inviteId:string, acceptId:string) {

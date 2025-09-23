@@ -7,7 +7,7 @@ export class TimeslotsDto implements ITimeslots {
     @ApiProperty({
         description: '開始月份',
         required: false,
-        example: 6
+        example: 6,
     })
     @IsOptional()
     @IsNumber()

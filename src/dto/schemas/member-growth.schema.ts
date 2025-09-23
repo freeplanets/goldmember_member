@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { IMemberGrowth } from "../interface/report.if";
 import { Document } from "mongoose";
-import { IMemberGrowth } from "../interface/member.if";
 
 export type MemberGrowthDocument = Document & MemberGrowth;
 

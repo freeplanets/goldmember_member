@@ -8,7 +8,7 @@ import { MemberDetailInfo } from './member-detail-info';
 export class MemberProfileResponseDto extends CommonResponseDto implements ICommonResponse<Partial<IMember>> {
   @ApiProperty({
     description: '會員詳細資料',
-    type:MemberDetailInfo,
+    type: MemberDetailInfo,
   }) 
   data?: Partial<IMember>;
 }

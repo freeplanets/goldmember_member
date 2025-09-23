@@ -15,6 +15,8 @@ export class CourseInfoData {
     description: '',
     required: false,
     example: [new CourseInfoHolesData()],
+    type: CourseInfoHolesData,
+    isArray: true,
   })
   @IsOptional()
   @IsArray()

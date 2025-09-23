@@ -3,10 +3,10 @@ import { MEMBER_LEVEL, SmsCodeUsage } from '../utils/enum';
 import { MemberPutProfileRequestDto } from '../dto/member/member-put-profile-request.dto';
 import { MemberPasswordRequestDto } from '../dto/member/member-password-request.dto';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Member, MemberDcoument } from '../dto/schemas/member.schema';
-import mongoose, { Model } from 'mongoose';
+import { Member, MemberDocument } from '../dto/schemas/member.schema';
+import mongoose, { Model, UpdateQuery } from 'mongoose';
 import { Upload2S3 } from '../utils/upload-2-s3';
-import { IMember } from '../dto/interface/member.if';
+import { IMember, INotificationOptions, IPushToken } from '../dto/interface/member.if';
 import { CommonResponseDto } from '../dto/common/common-response.dto';
 import { ErrCode } from '../utils/enumError';
 import { TempData } from '../dto/schemas/tempdata.schema';
@@ -22,19 +22,27 @@ import { InvitationCode, InvitationCodeDocument } from '../dto/schemas/invitatio
 import { MembersConvertToShareholderRequestDto } from '../dto/member/members-convert-to-shareholder-request.dto';
 import { IUser } from '../dto/interface/user.if';
 import { ShareholderSwitchReqDto } from '../dto/member/shareholder-switch-request.dto';
+import { PushToken, PushTokenDocument } from '../dto/schemas/push-token.schema';
+import { IReturnObj } from '../dto/interface/common.if';
+import { FuncWithTryCatchNew } from '../classes/common/func.def';
+import { MemberNotifyOpt } from '../classes/member/member-notify-opt';
 
 @Injectable()
 export class MemberService {
+  private mbrOptOp:MemberNotifyOpt;
   constructor(
-    @InjectModel(Member.name) private readonly modelMember:Model<MemberDcoument>,
+    @InjectModel(Member.name) private readonly modelMember:Model<MemberDocument>,
     @InjectModel(TempData.name) private readonly tempDataModel:Model<TempData>,
     @InjectModel(KsMember.name) private ksMemberModel:Model<KsMemberDocument>,
     @InjectModel(MemberGrowth.name) private modelMG:Model<MemberGrowthDocument>,
     @InjectModel(MemberTransferLog.name) private modelMTL:Model<MemberTransferLogDocument>,
     @InjectModel(Coupon.name) private modelCoupon:Model<CouponDocument>,
     @InjectModel(InvitationCode.name) private readonly modelIC:Model<InvitationCodeDocument>,
+    @InjectModel(PushToken.name) private readonly modelPT:Model<PushTokenDocument>,
     @InjectConnection() private readonly connection:mongoose.Connection,    
-  ) {}
+  ) {
+    this.mbrOptOp = new MemberNotifyOpt(modelMember);
+  }
   async memberProfile(user:Partial<IMember>): Promise<any> {
     const mpRes = new MemberProfileResponseDto();
     try {
@@ -202,5 +210,33 @@ export class MemberService {
       comRes.error.extra = error.message;
     }
     return comRes;
+  }
+  async updatePushToken(data:Partial<IPushToken>, mbr:Partial<IMember>) {
+    return FuncWithTryCatchNew(this, 'modifyPushToken', data, mbr);
+    // const comRes = new CommonResponseDto();
+    // try {
+    //   console.log('data:', data);
+    //   // data.userId = mbr.id;
+    //   comRes.data = await this.modelPT.updateOne({userId: mbr.id}, data, {upsert: true});
+    // } catch(error) {
+    //   comRes.ErrorCode = ErrCode.UNEXPECTED_ERROR_ARISE;
+    //   comRes.error.extra = error.message;
+    // }
+    // return comRes;
+  }
+  private async modifyPushToken(data:Partial<IPushToken>, mbr:Partial<IMember>) {
+    const rtn:IReturnObj = {};
+    data.userId = mbr.id;
+    const deviceId = data.deviceId;
+    delete data.deviceId;
+    rtn.data = await this.modelPT.updateOne({deviceId}, data, {upsert: true});
+    return rtn; 
+  }
+  async getNotifyOpt(user:Partial<IMember>) {
+    return FuncWithTryCatchNew(this.mbrOptOp, 'get', user.id);
+  }
+
+  async setNotifyOpt(user:Partial<IMember>, data:INotificationOptions) {
+    return FuncWithTryCatchNew(this.mbrOptOp, 'set', user.id, data);
   }
 }

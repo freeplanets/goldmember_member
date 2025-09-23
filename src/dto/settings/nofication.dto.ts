@@ -6,7 +6,7 @@ export class NoficationDto implements INofication {
     @ApiProperty({
         description: '取消預約通知前的最小小時數',
         required: false,
-        example: '24'
+        example: '24',
     })
     @IsOptional()
     @IsString()

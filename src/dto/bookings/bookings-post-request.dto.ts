@@ -15,7 +15,7 @@ export class BookingsPostRequestDto implements Partial<IReserveSection> {
 
   @ApiProperty({
     description: '日期',
-    required: true,    
+    required: true,
   })
   @IsString()
   @Matches(DATE_STYLE , { message: DtoErrMsg.DATE_STYLE_ERROR })

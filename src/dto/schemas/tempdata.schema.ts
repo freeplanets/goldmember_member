@@ -10,7 +10,7 @@ export class TempData implements ITempData {
 
     @Prop()
     value?: string;
-
+    
     @Prop()
     codeUsage?: string;
 

@@ -13,7 +13,7 @@ export class ReserveHistory implements IReserveHistory {
     time:string;    //時間
 
     @ApiProperty({
-        description: '操作人員ID'
+        description: '操作人員ID',
     })
     id:string;  //操作人員ID
 

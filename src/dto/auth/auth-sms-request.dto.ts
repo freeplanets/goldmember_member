@@ -23,9 +23,9 @@ export class AuthSMSRequestDto {
     captchaId: string;
 
     @ApiProperty({
-    description: '圖形認證碼',
-    required: true,
-    example: '1A34',
+        description: '圖形認證碼',
+        required: true,
+        example: '1A34',
     })
     @IsString()
     captchaCode: string;

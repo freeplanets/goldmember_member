@@ -10,6 +10,7 @@ import { TokenGuard } from '../utils/tokens/token-guard';
 import { CouponAcceptRequestDto } from '../dto/coupon/coupon-accept-request.dto';
 import { CouponsTransferOneDto } from '../dto/coupon/coupons-transfer-one.dto';
 import { CouponsTransferManyDto } from '../dto/coupon/coupons-transfer-many.dto';
+import { AddTraceIdToResponse } from '../utils/constant';
 
 @Controller('coupons')
 @ApiTags('coupons')
@@ -28,6 +29,7 @@ export class CouponsController {
   @Get('')
   async couponsGet(@Req() req: any, @Res() res: Response) {
     const cpRes = await this.couponsService.couponsGet(req.user);
+    AddTraceIdToResponse(cpRes, req);
     return res.status(HttpStatus.OK).json(cpRes);
   }
 
@@ -46,6 +48,7 @@ export class CouponsController {
     @Res() res: Response,
   ) {
     const comRes = await this.couponsService.couponsPost(couponsPostRequestDto, req.user);
+    AddTraceIdToResponse(comRes, req);
     return res.status(HttpStatus.OK).json(comRes);
   }
 
@@ -72,6 +75,7 @@ export class CouponsController {
       couponsTransferRequestDto,
       req.user,
     );
+    AddTraceIdToResponse(comRes, req);
     return res.status(HttpStatus.OK).json(comRes);
   }
 
@@ -89,6 +93,7 @@ export class CouponsController {
     @Res() res:Response
   ) {
     const comRes = await this.couponsService.couponAccept(cpAccept, req.user);
+    AddTraceIdToResponse(comRes, req);
     res.status(HttpStatus.OK).json(comRes);
   }
 }

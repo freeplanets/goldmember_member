@@ -6,6 +6,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { LoginToken, LoginTokenSchema } from '../dto/schemas/login-token.schema';
 import { Reservations, ReservationsSchema } from '../dto/schemas/reservations.schema';
 import { ReserveSection, ReserveSectionSchema } from '../dto/schemas/reserve-section.schema';
+import { Member, MemberSchema } from '../dto/schemas/member.schema';
+import { Team, TeamSchema } from '../dto/schemas/team.schema';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { ReserveSection, ReserveSectionSchema } from '../dto/schemas/reserve-sec
       {name: LoginToken.name, schema: LoginTokenSchema},
       {name: Reservations.name, schema: ReservationsSchema},
       {name: ReserveSection.name, schema: ReserveSectionSchema},
+      {name: Member.name, schema: MemberSchema},
+      {name: Team.name, schema: TeamSchema},
     ])
   ],
   controllers: [BookingsController],

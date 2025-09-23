@@ -1,22 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Team, TeamDocument, TeamSchema } from '../dto/schemas/team.schema';
-import mongoose, { Connection, FilterQuery, Model, UpdateQuery } from 'mongoose';
+import { Team, TeamDocument } from '../dto/schemas/team.schema';
+import { Connection, FilterQuery, Model, UpdateQuery } from 'mongoose';
 import { TeamMemberDocument, TeamMember } from '../dto/schemas/team-member.schema';
 import { v1 as uuidv1 } from 'uuid';
 import { CommonResponseDto } from '../dto/common/common-response.dto';
 import { ErrCode } from '../utils/enumError';
-import { IActivityParticipants, IActMemberInfo, ICreditRecord, ITeam, ITeamActivity, ITeamMember, ITeamPositionInfo } from '../dto/interface/team-group.if';
+import { ITeam, ITeamActivity, ITeamMember } from '../dto/interface/team-group.if';
 import { GetTeamsResponse } from '../dto/teams/get-teams-response';
 import { TeamDetailResponse } from '../dto/teams/team-detail-response';
 import { Upload2S3 } from '../utils/upload-2-s3';
 import { COLLECTION_REF, ORGANIZATION_TYPE, TeamMemberPosition, TeamMemberStatus } from '../utils/enum';
-import { Member, MemberDcoument } from '../dto/schemas/member.schema';
+import { Member, MemberDocument } from '../dto/schemas/member.schema';
 import { TeamActivity, TeamActivityDocument } from '../dto/schemas/team-activity.schema';
 import { ActivityParticipantsResponse } from '../dto/teams/activity-participants-response';
 import { IMember } from '../dto/interface/member.if';
 //import { KsMember, KsMemberDocument } from '../dto/schemas/ksmember.schema';
-import { IbulkWriteItem, IHasId, IHasPhone, IOrganization } from '../dto/interface/common.if';
+import { IbulkWriteItem, IHasId, IOrganization } from '../dto/interface/common.if';
 import TeamPositonInfo from '../dto/teams/team-position-info';
 import { TeamUpdateRequestDto } from '../dto/teams/team-update-request.dto';
 import { CreditRecordRes } from '../dto/teams/credit-record-response';
@@ -33,6 +33,7 @@ import { AnnounceOp } from '../classes/announcements/announce-op';
 import { FuncWithTryCatchNew } from '../classes/common/func.def';
 import { IAnnouncement } from '../dto/interface/announcement.if';
 import { MessageOp } from '../classes/announcements/message-op';
+import { ObjectId } from '../utils/constant';
 
 interface I_TMPositon {
     T: TeamPositonInfo;
@@ -46,7 +47,7 @@ export class TeamsService {
     constructor(
         @InjectModel(Team.name) private readonly modelTeam:Model<TeamDocument>,
         @InjectModel(TeamMember.name) private readonly modelTeamMember:Model<TeamMemberDocument>,
-        @InjectModel(Member.name) private readonly modelMember:Model<MemberDcoument>,
+        @InjectModel(Member.name) private readonly modelMember:Model<MemberDocument>,
         @InjectModel(KsMember.name) private readonly modelKs:Model<KsMemberDocument>,
         @InjectModel(CreditRecord.name) private readonly modelCreditRecord:Model<CreditRecordDocument>,
         @InjectModel(TeamActivity.name) private readonly modelTeamActivity:Model<TeamActivityDocument>,
@@ -251,11 +252,11 @@ export class TeamsService {
                         // newTeam.description = rlt.OriginalFilename;
                     }
                 }
-                console.log("updTeam:", updTeam);
                 const updateResult = await this.modelTeam.updateOne({ id: teamId }, updTeam);
-                if (updateResult.modifiedCount === 0) {
-                    comRes.ErrorCode = ErrCode.ITEM_NOT_FOUND;
-                }
+                console.log("updTeam:", updTeam, updateResult);
+                // if (updateResult.modifiedCount === 0) {
+                //     comRes.ErrorCode = ErrCode.ITEM_NOT_FOUND;
+                // }
             } else {
                 comRes.ErrorCode = ErrCode.TEAM_NOT_FOUND;
             }
@@ -298,8 +299,8 @@ export class TeamsService {
         return comRes;
     }
     
-    async joinTeamMember(teamId: string, user:Partial<IMember>): Promise<CommonResponseDto> {
-        const comRes = new CommonResponseDto();
+    async joinTeamMember(teamId: string, user:Partial<IMember>): Promise<CommonResponseData> {
+        const comRes = new CommonResponseData();
         try {
             const me = await this.modelMember.findOne({id: user.id});
             const teamMbr = await this.modelTeamMember.findOne({teamId, memberInfo: me._id});
@@ -419,12 +420,13 @@ export class TeamsService {
         return comRes;
     }
     async acceptMember(teamId:string, memberId:string, user:Partial<IMember>) {
-        const comRes = new CommonResponseDto();
+        const comRes = new CommonResponseData();
         // const session = await this.connection.startSession();
         // session.startTransaction();
         try {
             //console.log('memberId:', memberId);
-            const isNotMgr = await this.isNotTeamManageLevel(teamId, user._id);
+            const mbra = await this.modelMember.findOne({id: user.id}, 'id');
+            const isNotMgr = await this.isNotTeamManageLevel(teamId, mbra._id);
             if (isNotMgr) {
                 comRes.ErrorCode = isNotMgr;
                 return comRes;
@@ -462,7 +464,8 @@ export class TeamsService {
         const msgOp = new MessageOp(this.modelAnn);
         const comRes = new CommonResponseDto();
         try {
-            const isNotMgr = await this.isNotTeamManageLevel(teamId, user._id);
+            const mbr = await this.modelMember.findOne({id: user.id}, 'id');
+            const isNotMgr = await this.isNotTeamManageLevel(teamId, mbr._id);
             if (isNotMgr) {
                 comRes.ErrorCode = isNotMgr;
                 return comRes;
@@ -503,8 +506,8 @@ export class TeamsService {
         }
         return comRes;        
     }
-    async createTeamActivity(teamId:string, taCreate:Partial<ITeamActivity>, user:Partial<IMember>):Promise<CommonResponseDto> {
-        const comRes = new CommonResponseDto();
+    async createTeamActivity(teamId:string, taCreate:Partial<ITeamActivity>, user:Partial<IMember>):Promise<CommonResponseData> {
+        const comRes = new CommonResponseData();
         const session = await this.connection.startSession();
         session.startTransaction();
         try {
@@ -527,6 +530,7 @@ export class TeamsService {
                     )
                     if (t) {
                         await session.commitTransaction();
+                        comRes.data = ans;
                     } else {
                         await session.abortTransaction();
                         comRes.ErrorCode = ErrCode.DATABASE_ACCESS_ERROR;
@@ -586,14 +590,16 @@ export class TeamsService {
                 .findOne({id: activityId}, 'participants')
                 .populate({ 
                     path:'participants',
-                    select: 'role handicap memberInfo memberFrom',
+                    select: 'role handicap joinDate memberInfo memberFrom',
                     populate: {
                         path: 'memberInfo',
                         select: 'id no name pic handicap',
                     }
                 }).exec();
             if (act) {
-                const mbrs = act.participants.map((p:IActivityParticipants) => {
+                const mbrs = act.participants.map((
+                    p:ITeamMember, //IActivityParticipants
+                ) => {
                     // console.log('getAct:', p);
                     // const nMbr:Partial<IActMemberInfo> = {
                     //     ...(p.member as Partial<IMember>),
@@ -742,13 +748,23 @@ export class TeamsService {
     async joinActivity(teamId:string, activityId:string, user:Partial<IMember>) {
         const comRes = new CommonResponseDto();
         try {
-            const tmr = await this.modelTeamMember.findOne({teamId, memberInfo: user._id, status: TeamMemberStatus.CONFIRMED});
+            //const mbr = await this.modelMember.findOne({id: user.id}, 'id');
+            const objId = new ObjectId(user._id)
+            const tmr = await this.modelTeamMember
+                .findOne({teamId, memberInfo: objId, status: TeamMemberStatus.CONFIRMED}, 'id');
             console.log('joinActivity:', tmr, user._id, user.id);
             if (tmr) {
                 const jAct = await this.modelTeamActivity.findOne({id: activityId});
                 if (jAct.participants.length < jAct.maxParticipants) {
-                    const actUpd = await this.modelTeamActivity.updateOne({id: activityId}, {$push: { participants: tmr._id}});
-                    console.log(actUpd)
+                    const f = jAct.participants.find((t) => JSON.stringify(t) === JSON.stringify(tmr._id));
+                    console.log('f:', f);
+                    if (!f) {
+                        const actUpd = await this.modelTeamActivity.updateOne({id: activityId}, {$push: { participants: tmr._id}});
+                        console.log('actUpd', actUpd);
+                        // comRes.data = activityId;
+                    } else {
+                        comRes.ErrorCode = ErrCode.TEAM_ACTIVITY_ALREADY_JOINED;
+                    }
                 } else {
                     comRes.ErrorCode = ErrCode.TEAM_ACTIVITY_MAX_PARTICIPANTS;
                 }
@@ -765,8 +781,11 @@ export class TeamsService {
     async leaveActivity(teamId:string, activityId:string, user:Partial<IMember>) {
         const comRes = new CommonResponseDto();
         try {
-            const tmr = await this.modelTeamMember.findOne({teamId, memberInfo: user._id, status: TeamMemberStatus.CONFIRMED});
-            console.log('leaveAct:', tmr, )
+            //const mbr = await this.modelMember.findOne({id: user.id}, 'id');
+            const objId = new ObjectId(user._id);
+            const tmr = await this.modelTeamMember
+                .findOne({teamId, memberInfo: objId,status: TeamMemberStatus.CONFIRMED}, 'id');
+            console.log('leaveAct:', tmr, user._id);
             if (tmr) {
                 const actUpd = await this.modelTeamActivity.updateOne({id: activityId}, {$pull: { participants: tmr._id}});
                 console.log(actUpd)
@@ -791,16 +810,21 @@ export class TeamsService {
             // phone: user.phone,
             // membershipType: user.membershipType,
             // systemId: user.systemId,
+            joinDate: this.myDate.toDateString(),
             handicap: user.handicap,
             role: TeamMemberPosition.MEMBER,
         }        
     }
     async announcementsGet(teamId:string) {
-        const filter:FilterQuery<AnnouncementDocument> = {};
+        const filter:FilterQuery<AnnouncementDocument> = {
+            isPublished: true,
+        };
         filter['organization.id'] = teamId,
         filter.$and = [
-            {publishDate: {$gte: this.myDate.toDateString() }},
-            {publishDate: {$lte: this.myDate.AddMonth(3)}},
+            //{publishDate: {$gte: this.myDate.toDateString() }},
+            //{publishDate: {$lte: this.myDate.AddMonth(3)}},
+            {expiryDate: {$gte: this.myDate.toDateString() }},
+            {expiryDate: {$lte: this.myDate.AddMonth(3)}},
         ];
         console.log(filter, filter.$and);
         return FuncWithTryCatchNew(this.annOp, 'list', filter);

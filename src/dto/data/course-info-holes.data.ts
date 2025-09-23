@@ -23,6 +23,7 @@ export class CourseInfoHolesData {
     description: '',
     required: false,
     example: new CourseInfoDistancesData(),
+    type: CourseInfoDistancesData,
   })
   @IsOptional()
   @IsObject()

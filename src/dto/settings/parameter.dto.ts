@@ -52,6 +52,7 @@ export class ParameterDto implements IParameter<IValueScore | INofication | IGra
     @ApiProperty({
         description: '參數描述',
         required: false,
+        type: String,
     })
     @IsOptional()
     @IsString()

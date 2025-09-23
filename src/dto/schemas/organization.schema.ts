@@ -18,4 +18,5 @@ export class Organization implements IOrganization {
     @Prop()
     name: string;
 }
+
 export const OrganizationSchema = SchemaFactory.createForClass(Organization);

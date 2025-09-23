@@ -1,9 +1,10 @@
-import { Controller, Get, HttpStatus, Post, Req, Res, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { TokenGuard } from "../utils/tokens/token-guard";
-import { Response, Request } from "express";
-import { AnnouncementsResponseDto } from "../dto/announcements/announcements-response.dto";
-import { AnnouncementsService } from "../service/announcements.service";
+import { Controller, Get, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { TokenGuard } from '../utils/tokens/token-guard';
+import { Response, Request } from 'express';
+import { AnnouncementsResponseDto } from '../dto/announcements/announcements-response.dto';
+import { AnnouncementsService } from '../service/announcements.service';
+import { AddTraceIdToResponse } from '../utils/constant';
 
 @Controller('announcements')
 @ApiTags('announcements')
@@ -18,8 +19,12 @@ export class AnnouncementsController {
         type: AnnouncementsResponseDto,
     })
     @Get('list')
-    async announcementsGetForAll(@Res() res:Response) {
+    async announcementsGetForAll(
+        @Req() req:Request,
+        @Res() res:Response,
+    ) {
         const annRes = await this.annonceService.getAnnounce();
+        AddTraceIdToResponse(annRes, req);
         return res.status(HttpStatus.OK).json(annRes);
     }
 
@@ -39,6 +44,7 @@ export class AnnouncementsController {
         @Res() res: Response,
     ) {
         const annRes = await this.annonceService.getAnnounce(req.user);
+        AddTraceIdToResponse(annRes, req);
         return res.status(HttpStatus.OK).json(annRes);
     }
 

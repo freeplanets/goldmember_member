@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { Member, MemberDcoument } from "../dto/schemas/member.schema";
+import { Member, MemberDocument } from "../dto/schemas/member.schema";
 import { IMember } from "../dto/interface/member.if";
 import { DevicesResponse } from "../dto/devices/devices-response";
 import { ErrCode } from "../utils/enumError";
@@ -9,7 +9,7 @@ import { CommonResponseDto } from "../dto/common/common-response.dto";
 
 @Injectable()
 export class DevicesService {
-    constructor(@InjectModel(Member.name) private readonly modelMember:Model<MemberDcoument>){}
+    constructor(@InjectModel(Member.name) private readonly modelMember:Model<MemberDocument>){}
     async getDevices(user:Partial<IMember>):Promise<DevicesResponse> {
         const devRes = new DevicesResponse();
         try {

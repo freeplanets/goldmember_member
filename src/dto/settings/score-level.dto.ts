@@ -34,7 +34,6 @@ export class ScoreLevelDto implements IScoreLevel {
         description: '每月總預約時段數',
         required: false,
         example: '20',
-
     })
     total_max_slots: string;    // '20', 每月總預約時段數  
 }

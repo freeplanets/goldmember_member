@@ -58,7 +58,7 @@ export class ReservationsData implements IReservations {
     membershipType:MEMBER_LEVEL;  //會員類型 (個人預約時使用)
 
     @ApiProperty({
-        description: '參與人數 (個人預約時使用)'
+        description: '參與人數 (個人預約時使用)',
     })
     playerCount:number; //參與人數 (個人預約時使用)
 

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from '../src/service/auth.service';
 import { getModelToken, MongooseModule } from '@nestjs/mongoose';
-import { Member, MemberDcoument, MemberSchema } from '../src/dto/schemas/member.schema';
+import { Member, MemberDocument, MemberSchema } from '../src/dto/schemas/member.schema';
 import { AuthModule } from '../src/module/auth.module';
 import { TempData, TempDataSchema } from '../src/dto/schemas/tempdata.schema';
 import { JwtModule } from '@nestjs/jwt';

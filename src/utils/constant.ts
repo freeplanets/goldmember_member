@@ -1,5 +1,7 @@
-import { IOrganization } from '../dto/interface/common.if';
+import mongoose from 'mongoose';
+import { ICommonResponse, IOrganization } from '../dto/interface/common.if';
 import { ORGANIZATION_TYPE } from './enum';
+import { Request } from 'express';
 
 
 /**
@@ -51,3 +53,27 @@ export const KS_MEMBER_STYLE_FOR_SEARCH = new RegExp(/^[1256]\d{2,3}$/); //3個�
 export const PASSWORD_RETRY_COUNT = 5;
 export const PASSWORD_RETRY_TIME = 1800000; // 30分鐘
 export const THREE_MONTH =  7776000000; // 1000*60*60*24*90 = 90天
+
+export const ObjectId = mongoose.Types.ObjectId;
+
+export function needsBuffer(str: string): boolean {
+  // 檢查是否有明顯亂碼（如不可見字元或常見亂碼範圍）
+  // 這裡以出現不可見控制字元為例
+  return /[\u0000-\u001F\u007F-\u009F]/.test(str);
+}
+
+export function AddTraceIdToResponse(res:ICommonResponse<any>, req:Request) {
+  try {
+    if (!res.error) res.error =  { extra: {} };
+    else if (!res.error.extra) {
+      res.error.extra = {};
+    }
+    res.error.extra.traceId = req['traceId'];
+  } catch (err) {
+    console.log('AddTraceIdToResponse err:', err);
+    res['traceId'] = req['traceId'];
+    console.log('AddTraceIdToResponse res:', res);
+    //res.ErrorCode = ErrCode.UNEXPECTED_ERROR_ARISE;
+  }
+  //return res;
+}

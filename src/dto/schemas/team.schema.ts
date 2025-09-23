@@ -28,6 +28,16 @@ export class Team implements ITeam {
     @Prop()
     description: string;    //球隊描述
 
+    // @Prop({
+    //     type: TeamPositonInfo,
+    // })
+    // leader:	ITeamPositionInfo;  // 隊長
+
+    // @Prop({
+    //     type: TeamPositonInfo,
+    // })
+    // manager: ITeamPositionInfo; // 經理
+
     @Prop({
         type: TeamPositonInfo,
     })    
@@ -41,7 +51,7 @@ export class Team implements ITeam {
         type: [{ 
             type: mongoose.Schema.Types.ObjectId, 
             ref: 'TeamMember',
-            select: 'id name role joinDate phone membershipType isActive systemId',
+            select: 'id name role joinDate phone membershipType isActive systemId pic',
         }],
         default: [],
     })

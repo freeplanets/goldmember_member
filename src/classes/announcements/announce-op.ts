@@ -1,7 +1,7 @@
 import { FilterQuery, Model } from 'mongoose';
 import { AnnouncementFilterDto } from '../../dto/announcements/announcement-filter.dto';
 import { MainFilters } from '../filters/main-filters';
-import { MemberDcoument } from '../../dto/schemas/member.schema';
+import { MemberDocument } from '../../dto/schemas/member.schema';
 import { KsMemberDocument } from '../../dto/schemas/ksmember.schema';
 import { IOrganization, IReturnObj } from '../../dto/interface/common.if';
 import { AnnouncementSearch } from '../../dto/announcements/announcements-search.dto';
@@ -22,7 +22,7 @@ export class AnnounceOp {
     private myFilter = new MainFilters();
     private myDate = new DateLocale();
     constructor(
-        private readonly modelMember:Model<MemberDcoument>,
+        private readonly modelMember:Model<MemberDocument>,
         private readonly modelKs:Model<KsMemberDocument>,
         private readonly modelAnnouncement:Model<AnnouncementDocument>,
     ) {}
@@ -47,7 +47,14 @@ export class AnnounceOp {
         if (!filters) filters = {};
         filters['organization.id'] = org.id;
         const threeMonthsAgo = this.myDate.AddMonthLessOneDay(-3);
-        filters.publishDate = { $gte: threeMonthsAgo };
+        if (!filters.$or) {
+            filters.$or = [
+                {publishDate: { $gte: threeMonthsAgo }},
+                {authorizer: { $exists: false}},
+            ];
+        } else {
+            filters.publishDate = { $gte: threeMonthsAgo };
+        }
         console.log('filters:', filters);
         return this.list(filters);
     }
@@ -168,7 +175,7 @@ export class AnnounceOp {
         announceUpdateDto = dtoChk.Data;
         if (files.length > 0 ) {
             const promises = files.map((file) =>  this.upload(file));
-            console.log("files", files);
+            console.log("announcementsIdPut files", files);
             // const upload = this.uploadFile(file);
             const upload = await Promise.all(promises)
             console.log('upload:', upload);
@@ -184,6 +191,8 @@ export class AnnounceOp {
             const f = announceUpdateDto.attachments.find((itm) => itm.name === attachment.name);
             if (!f) announceUpdateDto.attachments.push(attachment);
             });
+        } else {
+            announceUpdateDto.attachments = [];
         }
         const me:any = user;
         announceUpdateDto.updater = {

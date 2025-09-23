@@ -65,7 +65,7 @@ export class CouponData extends CouponRequestDto implements ICoupon {
 
   @ApiProperty({
     description: '轉為紙本(號碼)',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsString()

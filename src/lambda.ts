@@ -64,6 +64,7 @@ async function bootstrapServer():Promise<Server> {
     SwaggerModule.setup('api', app, document, swaggerCustomOptions);
     app.use(eventContext());
     const vopt:ValidationPipeOptions = {
+        //whitelist: true,
         exceptionFactory: ValidationException,
     }
     app.useGlobalPipes(new GlobalDataTransPipe(), new ValidationPipe(vopt));

@@ -37,5 +37,6 @@ import { MemberGrowth, MemberGrowthSchema } from '../dto/schemas/member-growth.s
   ],
   controllers: [AuthController],
   providers: [AuthService],
+  exports: [AuthService],
 })
 export class AuthModule {}

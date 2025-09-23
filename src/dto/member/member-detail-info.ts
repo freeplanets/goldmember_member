@@ -6,12 +6,12 @@ export class MemberDetailInfo implements Partial<IMember> {
     @ApiProperty({
         description: '會員名稱',
         required: false,
-        example: '王大明'
+        example: '王大明',
     })
     name?: string;
 
     @ApiProperty({
-        description: '會員暱稱'
+        description: '會員暱稱',
     })
     displayName?: string;
 
@@ -41,21 +41,21 @@ export class MemberDetailInfo implements Partial<IMember> {
     @ApiProperty({
         description: '手機號碼',
         required: false,
-        example: '0912123456'
+        example: '0912123456',
     })
     phone?: string;
 
     @ApiProperty({
         description: '生日',
         required: false,
-        example: '1934/01/01'
+        example: '1934/01/01',
     })
     birthDate?: string;
 
     @ApiProperty({
         description: '地址',
         required: false,
-        example: '新北市蘆洲區中山一路XX號'
+        example: '新北市蘆洲區中山一路XX號',
     })
     address?: string;
 

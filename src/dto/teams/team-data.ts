@@ -3,6 +3,7 @@ import { ICreditRecord, ITeam, ITeamActivity, ITeamAnnouncement, ITeamMember, IT
 import { TeamStatus } from '../../utils/enum';
 import TeamPositonInfo from './team-position-info';
 import { TeamMemberData } from './team-member-data';
+import { CreditRecord } from '../schemas/credit-record.schema';
 
 export class TeamData implements ITeam {
     @ApiProperty({
@@ -73,6 +74,7 @@ export class TeamData implements ITeam {
 
     @ApiProperty({
         description: '評分記錄',
+        type: CreditRecord,
     })
     creditHistory?: ICreditRecord[]; //評分記錄
 

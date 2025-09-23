@@ -11,6 +11,7 @@ import { TeamReserveReqDto } from '../dto/bookings/team-reserve-request.dto';
 import { ReservationCreateRequestDto } from '../dto/bookings/reservation-create-request.dto';
 import { ReservationModifyRequestDto } from '../dto/bookings/reservation-modify-request.dto';
 import { DateRangeQueryReqDto } from '../dto/common/date-range-query-request.dto';
+import { AddTraceIdToResponse } from '../utils/constant';
 
 @Controller('reservation')
 @ApiTags('reservation')
@@ -34,6 +35,7 @@ export class BookingsController {
     @Res() res: Response
   ) {
     const result =  await this.bookingsService.bookingsGet(query, req.user);
+    AddTraceIdToResponse(result, req);
     return res.status(HttpStatus.OK).json(result);
   }
 
@@ -53,7 +55,7 @@ export class BookingsController {
     @Res() res: Response,
   ) {
     const rlt = await this.bookingsService.bookingsPost(bookingsPostRequestDto, req.user);
-
+    AddTraceIdToResponse(rlt, req);
     return res.status(HttpStatus.OK).json(rlt);
   }
 
@@ -68,11 +70,12 @@ export class BookingsController {
   @Get('/available')
   async bookingsAvailable(
     @Query() dates: DateRangeQueryReqDto,
+    @Req() req: Request,
     @Res() res: Response,
   ) {
     console.log(dates);
     const rlt = await this.bookingsService.bookingsAvailable(dates);
-
+    AddTraceIdToResponse(rlt, req);
     return res.status(HttpStatus.OK).json(rlt);
   }
 
@@ -91,6 +94,7 @@ export class BookingsController {
     @Res() res:Response,
   ) {
     const rlt = await this.bookingsService.cancelBooking(revId, req.user);
+    AddTraceIdToResponse(rlt, req);
     return res.status(HttpStatus.OK).json(rlt);
   }
 
@@ -109,6 +113,7 @@ export class BookingsController {
     @Res() res:Response,
   ) {
     const rlt = await this.bookingsService.teamBooking(reser, req.user);
+    AddTraceIdToResponse(rlt, req);
     return res.status(HttpStatus.OK).json(rlt);
   }
 
@@ -128,6 +133,7 @@ export class BookingsController {
     @Res() res:Response,
   ) {
     const rlt = await this.bookingsService.modifyBooking(teamId, reser, req.user);
+    AddTraceIdToResponse(rlt, req);
     return res.status(HttpStatus.OK).json(rlt);
   }
   
@@ -143,11 +149,12 @@ export class BookingsController {
   async cancelTeamBooking(
     @Param('teamId') teamId:string,
     @Param('id') revId:string,
-    @Body() reser:ReservationModifyRequestDto,
+    //@Body() reser:ReservationModifyRequestDto,
     @Req() req:any,
     @Res() res:Response,
   ) {
     const rlt = await this.bookingsService.cancelBooking(revId, req.user, teamId);
+    AddTraceIdToResponse(rlt, req);
     return res.status(HttpStatus.OK).json(rlt);
   }
   
@@ -156,6 +163,21 @@ export class BookingsController {
     @Res() res:Response,
   ) {
     const rlt = await this.bookingsService.refilldata();
+    return res.status(HttpStatus.OK).json(rlt);    
+  }
+  @Get('/fillAppointment')
+  async fillAppointment(
+    @Res() res:Response,
+  ) {
+    const rlt = await this.bookingsService.fillAppointment();
+    return res.status(HttpStatus.OK).json(rlt);    
+  }
+  
+  @Get('refillInfo')
+  async refillnfo(
+    @Res() res:Response,
+  ){
+    const rlt = await this.bookingsService.refillInfo();
     return res.status(HttpStatus.OK).json(rlt);    
   }
 }

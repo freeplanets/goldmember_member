@@ -14,6 +14,8 @@ import { FuncWithTryCatchNew } from '../classes/common/func.def';
 import { IbulkWriteItem } from '../dto/interface/common.if';
 import { CommonResponseData } from '../dto/common/common-response.data';
 import { DateRangeQueryReqDto } from '../dto/common/date-range-query-request.dto';
+import { Member, MemberDocument } from '../dto/schemas/member.schema';
+import { Team, TeamDocument } from '../dto/schemas/team.schema';
 
 @Injectable()
 export class BookingsService {
@@ -21,11 +23,13 @@ export class BookingsService {
   constructor(
     @InjectModel(Reservations.name) private readonly modelRvn:Model<ReservationsDocument>,
     @InjectModel(ReserveSection.name) private readonly modelRS:Model<ReserveSectionDocument>,
+    @InjectModel(Member.name) private readonly modelMember:Model<MemberDocument>,
+    @InjectModel(Team.name) private readonly modelTeam:Model<TeamDocument>,
     @InjectConnection() private readonly connection:mongoose.Connection,
   ){
-    this.revOp = new ReserveOp(modelRvn, modelRS, connection);
+    this.revOp = new ReserveOp(modelRvn, modelRS, modelMember, modelTeam, connection);
   }
-  async bookingsGet(rqr: ReservationsQueryRequestDto, user:Partial<IMember>): Promise<ReservationsResponse> {
+  async bookingsGet(rqr: ReservationsQueryRequestDto, user:Partial<IMember>) {
     return FuncWithTryCatchNew(this.revOp, 'get', rqr, user)
   }
 
@@ -140,5 +144,28 @@ export class BookingsService {
     })
     comRes.data = await this.modelRS.bulkWrite(bulks as any);
     return comRes;
-  } 
+  }
+  
+  async refillInfo() {
+    return this.revOp.refillInfo();
+  }
+  async fillAppointment() {
+    const comRes = new CommonResponseData();
+    const lists = await this.modelRvn.find();
+    //lists.forEach((rev) => {
+    for (let i=0,n=lists.length;i<n;i++) {
+      const rev = lists[i];
+      console.log('rev1:', rev);
+      if ((rev.history && rev.history[0]) || rev.memberId) {
+        const appointment = rev.memberId ? rev.memberId : rev.history[0].id;
+        //console.log('rev:', rev.id, rev.history);
+        const upd = await this.modelRS.updateMany({reservationId: rev.id}, {appointment});
+        console.log('upd:', upd);
+      }
+    }
+
+    //})
+    //comRes.data = await this.modelRvn.bulkWrite(bulks as any);
+    return comRes;    
+  }  
 }

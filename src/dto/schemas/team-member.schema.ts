@@ -26,14 +26,14 @@ export class TeamMember implements Partial<ITeamMember> {
     })
     memberFrom?: COLLECTION_REF;
 
-    // @Prop()
-    // id?: string;
+    @Prop()
+    id?: string;
 
     // @Prop()
     // name?: string;
 
-    // @Prop()
-    // phone?: string;
+    @Prop()
+    phone?: string;
 
     // @Prop()
     // membershipType?: MEMBER_LEVEL;
@@ -55,9 +55,7 @@ export class TeamMember implements Partial<ITeamMember> {
     @Prop()
     isActive: boolean; //是否活躍
 
-    @Prop({
-        default: TeamMemberStatus.CONFIRMED,
-    })
+    @Prop()
     status?: TeamMemberStatus;
 }
 

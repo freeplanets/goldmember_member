@@ -50,7 +50,7 @@ export class TokenGuard implements CanActivate {
                     secret: process.env.API_KEY,
                 }
             )
-            // console.log('payload:', payload);
+            // console.log('TokenGuard payload:', payload);
             request['user'] = payload;
         } catch (e) {
             if (e instanceof TokenExpiredError ) {

@@ -5,6 +5,7 @@ import { CommonResponseDto } from '../dto/common/common-response.dto';
 import { SocialService } from '../service/social.service';
 import { TokenGuard } from '../utils/tokens/token-guard';
 import { FriendsRes } from '../dto/social/friends-response';
+import { AddTraceIdToResponse } from '../utils/constant';
 
 @Controller('social')
 @ApiTags('social')
@@ -28,6 +29,7 @@ export class SocialContorller {
         @Res() res:Response,
     ){
         const rlt = await this.frdService.makingFriend(memberId, req.user);
+        AddTraceIdToResponse(rlt, req);
         return res.status(HttpStatus.OK).json(rlt);
     }
 
@@ -45,6 +47,7 @@ export class SocialContorller {
         @Res() res:Response,
     ) {
         const rlt = await this.frdService.friendList(req.user);
+        AddTraceIdToResponse(rlt, req);
         return res.status(HttpStatus.OK).json(rlt);
     }
 
@@ -64,6 +67,7 @@ export class SocialContorller {
         @Res() res:Response,        
     ){
         const rlt = await this.frdService.undoFriend(memberId, req.user);
+        AddTraceIdToResponse(rlt, req);
         return res.status(HttpStatus.OK).json(rlt);        
     }
 }

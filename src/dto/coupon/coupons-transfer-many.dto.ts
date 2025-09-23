@@ -7,7 +7,8 @@ export class CouponsTransferManyDto {
   @ApiProperty({
     description: '優惠券代號',
     required: true,
-    type: Array<String>,
+    type: 'array',
+    items: { type: 'string' },
     examples: ['1e4d98843-6958-4567-97e5-d2672c0d04e8','c49216f2-e2bc-4df8-ae47-13ee88257545'],
   })
   @IsArray()
@@ -28,7 +29,7 @@ export class CouponsTransferManyDto {
   @ApiProperty({
     description: '受贈者手機號碼',
     required: false,
-    example: '0912345678'
+    example: '0912345678',
   })
   @IsOptional()
   @IsString()
