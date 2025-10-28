@@ -69,6 +69,7 @@ async function bootstrapServer():Promise<Server> {
     }
     app.useGlobalPipes(new GlobalDataTransPipe(), new ValidationPipe(vopt));
     await app.init();
+    //console.log(`bootstrapServer init done...`);
     return createServer(expressApp);
 }
 var cachedServer:Server;

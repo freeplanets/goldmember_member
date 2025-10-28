@@ -6,28 +6,32 @@ export class MemberNotifyOptReq implements INotificationOptions {
     @ApiProperty({
         description: '公告通知',
         required: true,
-        example: true
+        example: true,
+        default: true,
     })
     @IsBoolean()
     announcements: boolean;
 
     @ApiProperty({
         description: '預約通知',
-        example: true
+        example: true,
+        default: true,
     })
     @IsBoolean()
     bookingReminders: boolean;
 
     @ApiProperty({
         description: '球隊邀請通知',
-        example: true
+        example: true,
+        default: true,
     })
     @IsBoolean()
     teamInvites: boolean;
 
     @ApiProperty({
         description: '系統通知',
-        example: true
+        example: true,
+        default: true,
     })
     @IsBoolean()
     systemNotifications: boolean;
@@ -35,6 +39,7 @@ export class MemberNotifyOptReq implements INotificationOptions {
     @ApiProperty({
         description: '優惠券通知',
         example: true,
+        default: true,
     })
     @IsBoolean()
     couponNotifications: boolean;    

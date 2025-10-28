@@ -4,19 +4,29 @@ import { INotificationOptions } from "../interface/member.if";
 
 @Schema()
 export class NotificationOptions implements INotificationOptions {
-    @Prop()
+    @Prop({
+        default: true,
+    })
     announcements: boolean;
 
-    @Prop()
+    @Prop({
+        default: true,
+    })
     bookingReminders: boolean;
 
-    @Prop()
+    @Prop({
+        default: true,
+    })
     teamInvites: boolean;
 
-    @Prop()
+    @Prop({
+        default: true,
+    })
     systemNotifications: boolean;
 
-    @Prop()
+    @Prop({
+        default: true,
+    })
     couponNotifications: boolean;    
 }
 

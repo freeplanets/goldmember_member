@@ -23,6 +23,7 @@ import { TeamAnnouncementModifyDto } from '../dto/announcements/team-announcemen
 import { TeamAcceptReqDto } from '../dto/teams/accept-request.dto';
 import { TeamDenyReqDto } from '../dto/teams/deny-request.dto';
 import { AddTraceIdToResponse } from '../utils/constant';
+import { BadWordsPipe } from '../utils/pipes/bad-words';
 
 @Controller('teams')
 @ApiTags('teams')
@@ -474,7 +475,7 @@ export class TeamsController {
     @Post('announcements/:id')
     async announcementsPost(
         @Param('id') teamId:string,
-        @Body() announcementCreateDto: TeamAnnouncementCreateDto,
+        @Body(BadWordsPipe) announcementCreateDto: TeamAnnouncementCreateDto,
         @UploadedFiles() files: Array<Express.Multer.File>,
         @Req() req: any,
         @Res() res: Response,
@@ -505,7 +506,7 @@ export class TeamsController {
     async announcementsIdPut(
         @Param('id') teamId: string,
         @Param('annId') annId: string,
-        @Body() announceUpdateDto: TeamAnnouncementModifyDto,
+        @Body(BadWordsPipe) announceUpdateDto: TeamAnnouncementModifyDto,
         @UploadedFiles() files: Array<Express.Multer.File>,
         @Req() req: any,
         @Res() res: Response,

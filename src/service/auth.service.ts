@@ -33,6 +33,7 @@ import { ILoginDevice } from '../dto/interface/devices.if';
 import { MemberActivity, MemberActivityDocument } from '../dto/schemas/member-activity.schema';
 import { MemberGrowth, MemberGrowthDocument } from '../dto/schemas/member-growth.schema';
 import { DateLocale } from '../classes/common/date-locale';
+import { MemberDelete } from '../classes/member/member-delete';
 
 @Injectable()
 export class AuthService {
@@ -65,6 +66,10 @@ export class AuthService {
       if (mbr) {
         if (mbr.isLocked) {
           ahRes.ErrorCode = ErrCode.ACCOUNT_IS_LOCKED;
+          return ahRes;
+        }
+        if (!mbr.password) {
+          ahRes.ErrorCode = ErrCode.ACCOUNT_OR_PASSWORD_ERROR;
           return ahRes;
         }
         const isPassOk = await mbr.schema.methods.comparePassword(authRequestDto.password, mbr.password);

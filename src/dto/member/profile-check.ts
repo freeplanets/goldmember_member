@@ -7,6 +7,7 @@ import { DateLocale } from '../../classes/common/date-locale';
 export class ProfileCheck {
     private _data:Partial<IMember>;
     private _error:any;
+    private _msg:string[] = [];
     private myDate = new DateLocale();
     constructor(memberPutProfile:MemberPutProfileRequestDto){
         const memberProfile:Partial<IMember> = {};
@@ -25,6 +26,7 @@ export class ProfileCheck {
                                 'stylecheck': DtoErrMsg.DATE_STYLE_ERROR,
                                 value: memberPutProfile[key], 
                             }
+                            this._msg.push(DtoErrMsg.DATE_STYLE_ERROR);
                         } else {
                             memberProfile.birthMonth = this.myDate.getBirthMonth(memberPutProfile[key]);
                             memberPutProfile[key] = this.myDate.toDateString(memberPutProfile[key]);
@@ -36,6 +38,7 @@ export class ProfileCheck {
                                 'stylecheck' : DtoErrMsg.PHONE_STYLE_ERROR,
                                 value: memberPutProfile[key], 
                             }
+                            this._msg.push(DtoErrMsg.PHONE_STYLE_ERROR);
                         }  
                     } else if (key == 'email') {
                         if (!EMAIL_STYLE.test(memberPutProfile[key])) {
@@ -44,6 +47,7 @@ export class ProfileCheck {
                                 'stylecheck' : DtoErrMsg.EMAIL_STYLE_ERROR,
                                 value: memberPutProfile[key], 
                             }
+                            this._msg.push(DtoErrMsg.EMAIL_STYLE_ERROR);
                         }
                     }
                     memberProfile[key] = memberPutProfile[key];
@@ -58,5 +62,8 @@ export class ProfileCheck {
     }
     get Error() {
         return this._error;
+    }
+    get ErrorMessage() {
+        return this._msg.join(',');
     }
 }

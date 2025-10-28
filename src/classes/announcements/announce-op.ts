@@ -1,4 +1,4 @@
-import { FilterQuery, Model } from 'mongoose';
+import { FilterQuery, Model, UpdateQuery } from 'mongoose';
 import { AnnouncementFilterDto } from '../../dto/announcements/announcement-filter.dto';
 import { MainFilters } from '../filters/main-filters';
 import { MemberDocument } from '../../dto/schemas/member.schema';
@@ -173,26 +173,41 @@ export class AnnounceOp {
         }
         console.log('after fields check:', dtoChk.Data);
         announceUpdateDto = dtoChk.Data;
+        if (announceUpdateDto.attachments) {
+            announceUpdateDto.attachments = announceUpdateDto.attachments.map((itm) => {
+                if (typeof itm === 'string') {
+                    return JSON.parse(itm);
+                } else {
+                    return itm;
+                }
+            });
+            console.log('announeUpdateDto attachements:', announceUpdateDto.attachments);   
+        } else {
+           announceUpdateDto.attachments = []; 
+        }  
         if (files.length > 0 ) {
             const promises = files.map((file) =>  this.upload(file));
-            console.log("announcementsIdPut files", files);
+            console.log("files", files);
             // const upload = this.uploadFile(file);
             const upload = await Promise.all(promises)
             console.log('upload:', upload);
-            if (!announceUpdateDto.attachments) announceUpdateDto.attachments = [];
+            //if (!announceUpdateDto.attachments) announceUpdateDto.attachments = [];
             upload.forEach((file) => {
-            if (!file) return;
-            console.log("file name:", file.OriginalFilename);
-            const attachment:Attachment = {
-                name: file.OriginalFilename,
-                url: file.fileUrl, //`https://${this.AWS_S3_BUCKET}/${file.originalname}`,
-                size: file.filesize, 
-            }
-            const f = announceUpdateDto.attachments.find((itm) => itm.name === attachment.name);
-            if (!f) announceUpdateDto.attachments.push(attachment);
+                if (!file) return;
+                console.log("file name:", file.OriginalFilename);
+                const attachment:Attachment = {
+                    name: file.OriginalFilename,
+                    url: file.fileUrl, //`https://${this.AWS_S3_BUCKET}/${file.originalname}`,
+                    size: file.filesize, 
+                }
+                const f = announceUpdateDto.attachments.find((itm) => itm.name === attachment.name);
+                if (f) {
+                    f.url = attachment.url;
+                    f.size = attachment.size;
+                } else {
+                    announceUpdateDto.attachments.push(attachment);
+                }
             });
-        } else {
-            announceUpdateDto.attachments = [];
         }
         const me:any = user;
         announceUpdateDto.updater = {
@@ -210,7 +225,9 @@ export class AnnounceOp {
         if (org && org.id) {
             filter['organization.id'] = org.id;
         }
-        const rlt = await this.modelAnnouncement.updateOne(filter, announceUpdateDto);
+        const updater:UpdateQuery<AnnouncementDocument> = announceUpdateDto;
+        updater.$unset = { authorizer: 1};
+        const rlt = await this.modelAnnouncement.updateOne(filter, updater);    //announceUpdateDto);
         console.log('announcementsPost', rlt);
         if (rlt) {
             console.log('announcementsPost pass true check');       

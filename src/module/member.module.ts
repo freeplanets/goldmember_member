@@ -12,6 +12,9 @@ import { MemberTransferLog, MemberTransferLogSchema } from '../dto/schemas/membe
 import { Coupon, CouponSchema } from '../dto/schemas/coupon.schema';
 import { InvitationCode, InvitationCodeSchema } from '../dto/schemas/invitation-code.schema';
 import { PushToken, PushTokenSchema } from '../dto/schemas/push-token.schema';
+import { Team, TeamSchema } from '../dto/schemas/team.schema';
+import { TeamMember, TeamMemberSchema } from '../dto/schemas/team-member.schema';
+import { Friend, FriendSchema } from '../dto/schemas/friend.schema';
 
 @Module({
   imports: [
@@ -27,6 +30,9 @@ import { PushToken, PushTokenSchema } from '../dto/schemas/push-token.schema';
         {name:Coupon.name, schema: CouponSchema},
         {name:InvitationCode.name, schema: InvitationCodeSchema},
         {name:PushToken.name, schema:PushTokenSchema},
+        {name:Team.name, schema:TeamSchema},
+        {name:TeamMember.name, schema:TeamMemberSchema},
+        {name:Friend.name, schema:FriendSchema}
       ],
     ),
   ],

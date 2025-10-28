@@ -48,6 +48,10 @@ export enum ErrCode {
 	FRIEND_EXISTS_ERROR = 'FRIEND_EXISTS_ERROR',
 	FRIEND_NOT_EXISTS_ERROR = 'FRIEND_NOT_EXISTS_ERROR',
 	ANNOUNCEMENT_NOT_FOUND = 'ANNOUNCEMENT_NOT_FOUND',
+	BAD_WORD_DETECTED = 'BAD_WORD_DETECTED',
+	BAD_WORD_DETECTED_IN_FILE = 'BAD_WORD_DETECTED_IN_FILE',
+	BAD_WORD_DETECTED_IN_PIC = 'BAD_WORD_DETECTED_IN_PIC',
+	BAD_IMAGE_DETECTED = 'BAD_IMAGE_DETECTED',	
 }
 export enum ErrMsg {
 	MISS_PARAMETER = '參數不足',
@@ -97,6 +101,10 @@ export enum ErrMsg {
 	FRIEND_EXISTS_ERROR = '已經是朋友了。',
 	FRIEND_NOT_EXISTS_ERROR = '你們還不是朋友了。',
 	ANNOUNCEMENT_NOT_FOUND = '查無公告。',
+	BAD_WORD_DETECTED = '檢查到不雅文字',
+	BAD_WORD_DETECTED_IN_FILE = '你上傳的檔案檢查到不雅文字',
+	BAD_WORD_DETECTED_IN_PIC = '你上傳的圖片中檢查到不雅文字',
+	BAD_IMAGE_DETECTED = '你上傳的圖片可能有不雅內容',	
 }
 export const getErrorMessage = (code: ErrCode): string => {
 	const errKey = Object.keys(ErrCode).find((key) => ErrCode[key as keyof typeof ErrCode] === code);

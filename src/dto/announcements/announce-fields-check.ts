@@ -43,7 +43,7 @@ export class AnnounceFieldsCheck {
                         error[key] = {
                             'stylecheck': DtoErrMsg.ARRAY_STYLE_ERROR,
                             value: annDta[key],
-                        }
+                        };
                     }
                     // this._annDta.targetGroups = annDta.targetGroups.split(',');
                 // } else if (key==='publishDate') {
@@ -83,7 +83,7 @@ export class AnnounceFieldsCheck {
                             error['attachments'] = {
                                 'stylecheck' : DtoErrMsg.ARRAY_STYLE_ERROR,
                                 value: annDta[key], 
-                            }                            
+                            };
                         }
                     } else if (isArray(annDta[key])) {
                         this._annDta[key] = annDta[key];
@@ -92,7 +92,7 @@ export class AnnounceFieldsCheck {
                         error['attachments'] = {
                             'stylecheck' : DtoErrMsg.ARRAY_STYLE_ERROR,
                             value: annDta[key], 
-                        }
+                        };
                     }
                 } else {
                     this._annDta[key] = annDta[key];
@@ -130,7 +130,7 @@ export class AnnounceFieldsCheck {
             }
         } catch (err) {
             console.log('json parse error:', err);
-            rtn.error = err;
+            rtn.error = err.message;
         }
         return rtn;
     }

@@ -1,4 +1,4 @@
-import { Controller, Req, Res, HttpStatus, Get, Put, Body, Post, UploadedFile, UseInterceptors, Param, UseGuards, ValidationPipe, UsePipes, Query } from '@nestjs/common';
+import { Controller, Req, Res, HttpStatus, Get, Put, Body, Post, UploadedFile, UseInterceptors, Param, UseGuards, ValidationPipe, UsePipes, Query, Delete } from '@nestjs/common';
 import { MemberService } from '../service/member.service';
 import { Request, Response } from 'express';
 import { ApiResponse, ApiOperation, ApiTags, ApiConsumes, ApiBody, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
@@ -153,7 +153,7 @@ export class MemberController {
     summary: '會員通知設定',
     description: '會員通知設定',
   })
-    @ApiResponse({
+  @ApiResponse({
     description: '成功或失敗',
     type: MemberNotifyOptRes,
   })
@@ -165,5 +165,22 @@ export class MemberController {
   ) {
     const rlt = await this.memberService.setNotifyOpt(req['user'], data);
     return res.status(HttpStatus.OK).json(rlt);
-  }  
+  }
+  
+  @ApiOperation({
+    summary: '會員剛除帳號',
+    description: '會員刪除帳號',
+  })
+  @ApiResponse({
+    description: '成功或失敗',
+    type: CommonResponseDto,
+  })
+  @Delete('account')
+  async delAccount(
+    @Req() req:Request,
+    @Res() res:Response
+  ){
+    const rlt = await this.memberService.delAccount(req['user']);
+    return res.status(HttpStatus.OK).json(rlt);
+  }
 }

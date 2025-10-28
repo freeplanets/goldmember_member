@@ -189,7 +189,7 @@ export class CouponsService {
       phone,
       //isLocked: true,
       isCouponTriggered: true,
-      notes: `會員{${mbr.name}}轉贈優惠券,而新增之會員`, 
+      notes: lang.zhTW.MemberCreateByCouponTransfer.replace('{name}', mbr.name), //`會員{${mbr.name}}轉贈優惠券,而新增之會員`, 
     }
     const newMbr = await this.modelMember.create(J_Doe);
     console.log('createJDoeMember', newMbr);

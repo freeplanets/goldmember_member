@@ -1,11 +1,12 @@
 import { Body, Controller, Get, HttpStatus, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { CommonResponseDto } from '../dto/common/common-response.dto';
 import { SocialService } from '../service/social.service';
 import { TokenGuard } from '../utils/tokens/token-guard';
 import { FriendsRes } from '../dto/social/friends-response';
 import { AddTraceIdToResponse } from '../utils/constant';
+import { SendMessageReqDto } from '../dto/social/send-message-request.dto';
 
 @Controller('social')
 @ApiTags('social')
@@ -69,5 +70,24 @@ export class SocialContorller {
         const rlt = await this.frdService.undoFriend(memberId, req.user);
         AddTraceIdToResponse(rlt, req);
         return res.status(HttpStatus.OK).json(rlt);        
+    }
+
+    @ApiOperation({
+        summary: '傳送訊息',
+        description: '傳送訊息',
+    })
+    @ApiResponse({
+        description: '成功或失敗',
+        type: CommonResponseDto,
+    })
+    @Post('friends/messageto')
+    async messageTo(
+        @Body() data:SendMessageReqDto,
+        @Req() req:Request,
+        @Res() res:Response,
+    ){
+        const rlt = await this.frdService.messageTo(data, req['user']);
+        AddTraceIdToResponse(rlt, req);
+        return res.status(HttpStatus.OK).json(rlt);
     }
 }

@@ -26,6 +26,10 @@ import { PushToken, PushTokenDocument } from '../dto/schemas/push-token.schema';
 import { IReturnObj } from '../dto/interface/common.if';
 import { FuncWithTryCatchNew } from '../classes/common/func.def';
 import { MemberNotifyOpt } from '../classes/member/member-notify-opt';
+import { MemberDelete } from '../classes/member/member-delete';
+import { Team, TeamDocument } from '../dto/schemas/team.schema';
+import { TeamMember, TeamMemberDocument } from '../dto/schemas/team-member.schema';
+import { Friend, FriendDocument } from '../dto/schemas/friend.schema';
 
 @Injectable()
 export class MemberService {
@@ -39,6 +43,9 @@ export class MemberService {
     @InjectModel(Coupon.name) private modelCoupon:Model<CouponDocument>,
     @InjectModel(InvitationCode.name) private readonly modelIC:Model<InvitationCodeDocument>,
     @InjectModel(PushToken.name) private readonly modelPT:Model<PushTokenDocument>,
+    @InjectModel(Team.name) private readonly modelTeam:Model<TeamDocument>,
+    @InjectModel(TeamMember.name) private readonly modelTM:Model<TeamMemberDocument>,
+    @InjectModel(Friend.name) private readonly modelFrd:Model<FriendDocument>,
     @InjectConnection() private readonly connection:mongoose.Connection,    
   ) {
     this.mbrOptOp = new MemberNotifyOpt(modelMember);
@@ -74,6 +81,7 @@ export class MemberService {
         const profileChk = new ProfileCheck(memberPutProfile);
         if (profileChk.Error) {
           comRes.ErrorCode = ErrCode.ERROR_PARAMETER;
+          comRes.error.message = profileChk.ErrorMessage;
           comRes.error.extra = profileChk.Error;
           return comRes;
         }
@@ -235,8 +243,12 @@ export class MemberService {
   async getNotifyOpt(user:Partial<IMember>) {
     return FuncWithTryCatchNew(this.mbrOptOp, 'get', user.id);
   }
-
   async setNotifyOpt(user:Partial<IMember>, data:INotificationOptions) {
     return FuncWithTryCatchNew(this.mbrOptOp, 'set', user.id, data);
+  }
+  async delAccount(user:Partial<IMember>) {
+    const session = await this.connection.startSession();
+    const mbrDel = new MemberDelete(this.modelMember, this.ksMemberModel, this.modelMG, this.modelFrd, this.modelTeam, this.modelTM, session);
+    return FuncWithTryCatchNew(mbrDel, 'remove', user.id);
   }
 }

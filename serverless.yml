@@ -20,9 +20,11 @@ provider:
     MONGO_DB: ${env:dbase}
     MONGO_PORT: ${env:dbport}
     MONGO_REPLICA_SET: ${env:dbreplicaset}
+    MONGO_APPNAME: ${env:dbappname}
     SALT_ROUNDS: ${env:SALT_ROUNDS}
     CWA_KEY: ${env:CWA_KEY}
     DEVICE_KEY: ${env:DEVICE_KEY}
+    FILE_PROXY: ${env:file_proxy}
   iamRoleStatements:
     - Effect: Allow
       Action:

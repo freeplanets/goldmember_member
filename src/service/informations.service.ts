@@ -30,7 +30,7 @@ export class InformationsService {
     async getInfo(dates:DateRangeQueryReqDto) {
         return FuncWithTryCatchNew(this, 'getAll', dates);
     }
-    private async getAll(dates:DateRangeQueryReqDto) {
+    private async getAll(dates:DateRangeQueryReqDto, user:Partial<IMember> | undefined) {
         // const datas:IAllInfo = {};
         console.log('get all dates:', dates);
         const rtn:IReturnObj = {};

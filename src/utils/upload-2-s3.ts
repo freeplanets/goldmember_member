@@ -1,8 +1,7 @@
-import * as AWS from 'aws-sdk';
-import { Readable } from 'stream';
+import * as AWS from "aws-sdk";
+import { Readable } from "stream";
 import { v1 as uuidv1 } from 'uuid';
-// import { ImageVerify } from './images/images-verify';
-//import { needsBuffer } from './constant';
+//import { needsBuffer } from "./constant";
 
 export interface Upload2S3Response {
     fileUrl: string;
@@ -10,14 +9,14 @@ export interface Upload2S3Response {
     filesize?: number;
 }
 
-
-
 export class Upload2S3 {
-    private AWS_S3_BUCKET = 'images.uuss.net/linkougolf';
+    private AWS_S3_BUCKET = 'images.uuss.net';
+    private prefix = '/linkougolf';
     private s3:AWS.S3;
     private filename:string;
     private newfilename:string;
     private filesize:number;
+    private changeFileName = true;
 
     constructor(region: string = 'ap-southeast-1', bucket='') {
         this.s3 = new AWS.S3({
@@ -46,28 +45,22 @@ export class Upload2S3 {
      * @param file - The file to upload.
      * @returns The S3 upload response or false if an error occurs.
      */
-    async uploadFile(file:Express.Multer.File) {
-        console.log('file:', file);
+    async uploadFile(file:Express.Multer.File, changeFileName = true) {
+        console.log('uploadFile:', file);
         //if (needsBuffer(file.originalname)) {
-        if (!this.isChinese(file.originalname)) {
-            if (this.isEncodedURIComponent(file.originalname)) {
-                file.originalname = decodeURIComponent(file.originalname);
-            } else {
-                file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
-            }
-        } else {
-            console.log('no buffer need');
-        }
-        console.log('after buffer from:', file.originalname, file.mimetype);
         const { originalname } = file;
         this.filename = originalname;
-        const ary = originalname.split('.');
-        this.newfilename = `${uuidv1()}.${ary[ary.length-1]}`;
-        file.originalname = this.newfilename;
+        if (changeFileName) {
+            const ary = originalname.split('.');
+            this.newfilename = `${uuidv1()}.${ary[ary.length-1]}`;
+            file.originalname = this.newfilename;
+        } else {
+            this.newfilename = file.originalname;
+        }
         this.filesize = file.size;
         return await this.s3_upload(
             file.buffer,
-            this.AWS_S3_BUCKET,
+            `${this.AWS_S3_BUCKET}${this.prefix}`,
             file.originalname,
             file.mimetype
         );
@@ -86,17 +79,31 @@ export class Upload2S3 {
             const s3Response = await this.s3.upload(params).promise();
             return s3Response;
         } catch(err) {
-            console.log('S3 Upload Error:', err);
+            console.log("S3 Upload Error:", err);
             return false;
         }
     }
-    isChinese(str: string): boolean {
-        // 檢查是否包含中文
-        return /[\u4e00-\u9fff]/.test(str);
+    async delFile(fileUrl:string) {
+        const key = this.getKey(fileUrl);
+        if (!key) return false;
+        console.log('delFile key:', key);
+        const params:AWS.S3.Types.DeleteObjectRequest = {
+            Bucket: this.AWS_S3_BUCKET+this.prefix,
+            Key: key,
+        }
+        try {
+            const ans = await this.s3.deleteObject(params).promise();
+            console.log('S3 delete file ans:', ans);
+            return true;
+        } catch (error) {
+            console.log('S3 delete file error:', error);
+            return false;
+        }
     }
-
-    isEncodedURIComponent(str: string): boolean {
-        // 檢查是否包含 %XX（XX 為兩位十六進位數字）
-        return /%[0-9A-Fa-f]{2}/.test(str);
-    }        
+    private getKey(url:string) {
+        const pos = url.indexOf('linkougolf/');
+        if (pos === -1) return '';
+        //return url.slice(pos, url.length);
+        return url.slice(pos+11, url.length);
+    }
 }

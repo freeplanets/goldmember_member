@@ -16,7 +16,6 @@ import { TeamDocument } from '../../dto/schemas/team.schema';
 import { ReservationStatusRequestDto } from '../../dto/bookings/reservation-status.request.dto';
 import { ParticipantData } from '../../dto/bookings/participant.data';
 
-
 export class ReserveOp {
     private myDate:DateLocale = new DateLocale();
     constructor(
