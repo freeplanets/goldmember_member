@@ -2,39 +2,30 @@
  ## 林口高爾夫球場預約系統 API 文件 
 <br/>
 
-### 安裝初始軟體包和 Prettier (Installing initial packages and applying Pretier)
+### 安裝初始軟體包
 
 ```sh
-npm install && npm run format
+yarn install
 ```
 
 <br/>
 
 ### Swagger Doc
 
-- http://localhost:3000/api-docs/
+- http://localhost:3000/docs-yaml/
 
 <br/>
 
-### local build & running
+### local running
 
 ```sh
-npm run start:local
+yarn run serve:offline
 ```
 
 ### deploy
 
 ```sh
-npm run build & npm run start
+yarn run deploy
 ```
 
-### unit test
-
-```sh
-npm run test
-```
-
-<br/>
-
-## src skeleton
 
