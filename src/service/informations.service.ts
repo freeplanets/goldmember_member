@@ -78,6 +78,10 @@ export class InformationsService {
         let ans = await this.modelGS.find(filter).sort({date: 1});
         //console.log('ans:', ans);
         if (ans.length > 0) ans = [ ans.pop() ];
+        else {
+            let lastone = await this.modelGS.findOne().sort({_id: -1}).exec();
+            ans  = [ lastone ];
+        }
         //console.log('ans afer pop:', ans);
         return ans;
     }

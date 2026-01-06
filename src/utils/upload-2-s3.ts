@@ -27,7 +27,7 @@ export class Upload2S3 {
         }
     }
     get file_url() {
-        return `https://${this.AWS_S3_BUCKET}/${this.newfilename}`;
+        return `https://${this.AWS_S3_BUCKET}${this.prefix}/${this.newfilename}`;
     }
     get originalFilename() {
         return this.filename;
